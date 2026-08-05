@@ -80,6 +80,19 @@
             <i class="fa-solid fa-chart-column" aria-hidden="true"></i>
             <span class="activity-button-label">Analysis</span>
           </button>
+          <button
+            id="help-panel-toggle"
+            type="button"
+            class="activity-button"
+            aria-pressed="false"
+            aria-expanded="false"
+            aria-controls="help-panel"
+            aria-label="Toggle about and help panel"
+            title="About &amp; help — what this is, how it works"
+          >
+            <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
+            <span class="activity-button-label">About</span>
+          </button>
         </nav>
 
         <main class="editor-stage" aria-label="Writing editor">
@@ -478,6 +491,65 @@
             <h3 class="status-card-title">Structure</h3>
             <p id="structure-summary" class="status-summary muted">Line count, stanza breaks, and shape cues live here.</p>
             <div id="structure-detail" class="status-detail"></div>
+          </section>
+        </div>
+      </aside>
+
+      <aside id="help-panel" class="drawer drawer-help" aria-label="About and help">
+        <header class="drawer-header">
+          <p class="eyebrow">About &amp; help</p>
+          <h2 class="drawer-title">What this is, how it works</h2>
+        </header>
+        <div class="drawer-body">
+          <section class="drawer-section">
+            <h3 class="drawer-section-title">About Lyric Studio</h3>
+            <p class="help-copy">
+              Lyric Studio is a quiet, focused workspace for song lyrics and poetry. The editor is the whole room —
+              a single page where your draft lives — and everything else (context, tools, analysis) stays out of
+              the way until you open it.
+            </p>
+            <p class="help-copy">
+              It pairs a clean writing surface with a stack of AI-assisted tools for sound, revision, and imagery,
+              plus lightweight local analysis for rhythm and structure. It&rsquo;s open source, free, and your drafts
+              stay in your browser.
+            </p>
+            <p class="help-copy">
+              Made for writers who want the page first and the gadgetry second.
+            </p>
+          </section>
+
+          <section class="drawer-section">
+            <h3 class="drawer-section-title">Frequently asked questions</h3>
+            <div class="faq-list">
+              <details class="faq-item" open>
+                <summary>How do I get AI help on a line?</summary>
+                <p>Select a phrase in the editor, or just leave the cursor on a line. Open <strong>Tools</strong>, pick a tool (rewrite, imagery, metaphor, rhyme…), and run it — it uses your selection first, and falls back to the active line.</p>
+              </details>
+              <details class="faq-item">
+                <summary>What does the genre picker do?</summary>
+                <p>It shapes every AI suggestion — vocabulary, conventions, and structure shift to match the genre you choose. Set it in the Tools panel before running a tool.</p>
+              </details>
+              <details class="faq-item">
+                <summary>Can the AI write the whole thing for me?</summary>
+                <p>The AI can generate suggestions for lines and stanzas, but it won't write the entire song/poem for you. You can copy and paste its suggestions into your draft as needed. This is to encourage users to add their own soul and creative input.</p>
+              </details>
+              <details class="faq-item">
+                <summary>Are my drafts saved anywhere?</summary>
+                <p>Yes, locally. Your draft is auto-backed-up in your browser for an hour, and the Context panel keeps a small history of versions you can restore. Nothing is sent to a server except the text you explicitly send to an AI tool.</p>
+              </details>
+              <details class="faq-item">
+                <summary>Do I need an API key to use this?</summary>
+                <p>The AI tools need an <code>OPENAI_API_KEY</code> on the server to work with the full model. Without one, tools still run — they fall back to lightweight browser-side versions so you can keep writing.</p>
+              </details>
+              <details class="faq-item">
+                <summary>Is Lyric Studio open source?</summary>
+                <p>Yes — it&rsquo;s Apache-2.0 licensed and hosted on GitHub. You can read the source, report issues, or contribute at <a class="help-link" href="https://github.com/HBIDamian/LyricStudio" target="_blank" rel="noreferrer noopener">github.com/HBIDamian/LyricStudio</a>.</p>
+              </details>
+              <details class="faq-item">
+                <summary>How can I support the project?</summary>
+                <p>If Lyric Studio is useful to you, you can help keep it going via <a class="help-link" href="https://ko-fi.com/hbidamian" target="_blank" rel="noreferrer noopener">ko-fi.com/hbidamian</a>.</p>
+              </details>
+            </div>
           </section>
         </div>
       </aside>

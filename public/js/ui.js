@@ -123,6 +123,8 @@ export function setupChrome({
   studioRailToggle,
   toolToggle,
   statusToggle,
+  helpPanel = null,
+  helpToggle = null,
   themeToggleButton = null,
   aiStatus,
   selectionChip,
@@ -146,6 +148,7 @@ export function setupChrome({
     { toggle: studioRailToggle, panel: studioRail },
     { toggle: toolToggle, panel: toolPanel },
     { toggle: statusToggle, panel: statusPanel },
+    { toggle: helpToggle, panel: helpPanel },
   ];
 
   const setDrawerOpen = (target, open) => {

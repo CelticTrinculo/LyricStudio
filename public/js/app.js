@@ -26,9 +26,11 @@ const lineChip = document.querySelector('#line-chip');
 const studioRail = document.querySelector('#studio-rail');
 const toolPanel = document.querySelector('#tool-panel');
 const statusPanel = document.querySelector('#status-panel');
+const helpPanel = document.querySelector('#help-panel');
 const studioRailToggle = document.querySelector('#studio-rail-toggle');
 const toolToggle = document.querySelector('#tool-panel-toggle');
 const statusToggle = document.querySelector('#status-panel-toggle');
+const helpToggle = document.querySelector('#help-panel-toggle');
 const workspace = document.querySelector('.workspace');
 const toolGroups = [...document.querySelectorAll('[data-tool-group]')];
 const toolCards = [...document.querySelectorAll('[data-tool-card]')];
@@ -111,9 +113,11 @@ const chrome = setupChrome({
   studioRail,
   toolPanel,
   statusPanel,
+  helpPanel,
   studioRailToggle,
   toolToggle,
   statusToggle,
+  helpToggle,
   themeToggleButton,
   aiStatus,
   selectionChip,
