@@ -530,9 +530,15 @@ function loadEditorFontSize() {
     stored = null;
   }
 
-  editorFontRem = Number.isFinite(stored)
-    ? Math.min(EDITOR_FONT_MAX_REM, Math.max(EDITOR_FONT_MIN_REM, stored))
-    : EDITOR_FONT_DEFAULT_REM;
+  if (!Number.isFinite(stored)) {
+    // No explicit preference: let the stylesheet pick the size
+    // (so responsive breakpoints like mobile still apply).
+    editorFontRem = EDITOR_FONT_DEFAULT_REM;
+    syncFontSizeButtons();
+    return;
+  }
+
+  editorFontRem = Math.min(EDITOR_FONT_MAX_REM, Math.max(EDITOR_FONT_MIN_REM, stored));
   applyEditorFontSize(editorFontRem);
   syncFontSizeButtons();
 }
