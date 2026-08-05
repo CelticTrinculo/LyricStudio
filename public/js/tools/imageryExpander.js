@@ -25,12 +25,13 @@ function localImagery(text) {
   });
 }
 
-export async function expandImagery({ text, contextLines = [], aiAvailable = false }) {
+export async function expandImagery({ text, genre = '', contextLines = [], aiAvailable = false }) {
   if (aiAvailable) {
     try {
       const response = await requestAssistant({
         tool: 'imagery',
         text,
+        genre,
         contextLines,
       });
 

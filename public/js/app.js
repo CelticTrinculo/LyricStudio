@@ -8,6 +8,8 @@ import { rewriteSelection } from './tools/rewriter.js';
 import { expandImagery } from './tools/imageryExpander.js';
 import { generateMetaphors } from './tools/metaphorGenerator.js';
 import { generateLineIdeas } from './tools/ideaGenerator.js';
+import { suggestTitles } from './tools/titleGenerator.js';
+import { reviewDraft } from './tools/polisher.js';
 import {
   escapeHtml,
   renderMetricList,
@@ -49,6 +51,7 @@ const metaphorEmotionOtherWrap = document.querySelector('#metaphor-emotion-other
 const metaphorEmotionOther = document.querySelector('#metaphor-emotion-other');
 const rewriteToneOtherWrap = document.querySelector('#rewrite-tone-other-wrap');
 const rewriteToneOther = document.querySelector('#rewrite-tone-other');
+const genrePicker = document.querySelector('#global-genre');
 const saveDraftButton = document.querySelector('#save-draft-button');
 const loadDraftButton = document.querySelector('#load-draft-button');
 const copyDraftButton = document.querySelector('#copy-draft-button');
@@ -57,9 +60,22 @@ const draftFileInput = document.querySelector('#draft-file-input');
 const autosaveIndicator = document.querySelector('#autosave-indicator');
 const editorShortcuts = document.querySelector('#editor-shortcuts');
 const editorActionStatus = document.querySelector('#editor-action-status');
+const lineCountChip = document.querySelector('#line-count');
+const wordCountChip = document.querySelector('#word-count');
+const fontDecreaseButton = document.querySelector('#font-decrease');
+const fontIncreaseButton = document.querySelector('#font-increase');
+const draftHistoryNode = document.querySelector('#draft-history');
 
 const LOCAL_DRAFT_STORAGE_KEY = 'lyric-studio-local-draft-backup';
 const LOCAL_DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
+const HISTORY_STORAGE_KEY = 'lyric-studio-draft-history';
+const HISTORY_MAX_ITEMS = 8;
+const HISTORY_MIN_GAP_MS = 20 * 1000;
+const EDITOR_FONT_STORAGE_KEY = 'lyric-studio-editor-font-size';
+const EDITOR_FONT_DEFAULT_REM = 1.2;
+const EDITOR_FONT_MIN_REM = 0.95;
+const EDITOR_FONT_MAX_REM = 1.7;
+const EDITOR_FONT_STEP_REM = 0.07;
 const IS_MAC = /(Mac|iPhone|iPad|iPod)/i.test(navigator.platform || '');
 const SHORTCUT_LABELS = {
   save: IS_MAC ? '⌘S' : 'Ctrl+S',
@@ -112,6 +128,8 @@ const resultNodes = {
   rewrite: document.querySelector('#rewrite-results'),
   imagery: document.querySelector('#imagery-results'),
   metaphor: document.querySelector('#metaphor-results'),
+  titles: document.querySelector('#titles-results'),
+  polish: document.querySelector('#polish-results'),
 };
 
 const statusNodes = {
@@ -127,10 +145,11 @@ const state = {
   aiAvailable: false,
   aiModel: null,
   selectedTone: 'poetic',
+  selectedGenre: '',
   ideaRhymeSelections: { ...IDEA_DEFAULT_RHYME_PATTERNS },
 };
 
-let editor;
+let editor = null;
 let editorActionStatusTimeout;
 let localDraftExpiresAt = 0;
 let isRestoringLocalDraft = false;
@@ -352,6 +371,187 @@ function restoreLocalDraftBackup() {
   return true;
 }
 
+/* ---------- Draft history ---------- */
+
+function readDraftHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
+
+    if (!raw) {
+      return [];
+    }
+
+    const items = JSON.parse(raw);
+
+    if (!Array.isArray(items)) {
+      return [];
+    }
+
+    return items
+      .filter((item) => item
+        && typeof item.id === 'string'
+        && typeof item.text === 'string'
+        && Number.isFinite(item.savedAt))
+      .slice(0, HISTORY_MAX_ITEMS);
+  } catch {
+    return [];
+  }
+}
+
+function writeDraftHistory(items) {
+  try {
+    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(items.slice(0, HISTORY_MAX_ITEMS)));
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function formatHistoryTime(timestamp) {
+  const minutes = Math.floor(Math.max(0, Date.now() - timestamp) / 60000);
+
+  if (minutes < 1) {
+    return 'just now';
+  }
+
+  if (minutes < 60) {
+    return `${minutes}m ago`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+
+  if (hours < 24) {
+    return `${hours}h ago`;
+  }
+
+  const days = Math.floor(hours / 24);
+  return days === 1 ? 'yesterday' : `${days}d ago`;
+}
+
+function pushDraftHistory(text = editor?.getEditorText?.() ?? '') {
+  if (isRestoringLocalDraft || !text || shouldSkipLocalDraftBackup(text)) {
+    return;
+  }
+
+  const items = readDraftHistory();
+  const latest = items[0];
+
+  if (latest && (latest.text === text || Date.now() - latest.savedAt < HISTORY_MIN_GAP_MS)) {
+    return;
+  }
+
+  items.unshift({
+    id: `draft-${Date.now()}`,
+    text,
+    savedAt: Date.now(),
+  });
+  writeDraftHistory(items);
+  renderDraftHistory();
+}
+
+function getHistoryPreview(text) {
+  const firstLine = text.split('\n').find((line) => line.trim());
+  return truncate(firstLine?.trim() || '(blank draft)', 42);
+}
+
+function renderDraftHistory() {
+  if (!draftHistoryNode) {
+    return;
+  }
+
+  const items = readDraftHistory();
+
+  if (!items.length) {
+    draftHistoryNode.innerHTML = '<p class="muted history-empty">Versions collect here automatically as you write — up to eight, one every few seconds.</p>';
+    return;
+  }
+
+  draftHistoryNode.innerHTML = `
+    <ol class="history-list">
+      ${items.map((item) => `
+        <li class="history-item">
+          <button type="button" class="history-restore" data-history-id="${escapeHtml(item.id)}" title="Restore this version">
+            <span class="history-time">${escapeHtml(formatHistoryTime(item.savedAt))}</span>
+            <span class="history-preview">${escapeHtml(getHistoryPreview(item.text))}</span>
+          </button>
+        </li>
+      `).join('')}
+    </ol>
+    <button id="clear-history-button" type="button" class="ghost-button history-clear">Clear history</button>
+  `;
+}
+
+function restoreDraftFromHistory(historyId) {
+  const item = readDraftHistory().find((entry) => entry.id === historyId);
+
+  if (!item) {
+    return;
+  }
+
+  pushDraftHistory(editor.getEditorText());
+  suppressNextAutosave = true;
+  isRestoringLocalDraft = true;
+  editor.setEditorText(item.text);
+  isRestoringLocalDraft = false;
+  renderDraftHistory();
+  setEditorStatus(`Restored a draft from ${formatHistoryTime(item.savedAt)}.`, 'success');
+}
+
+/* ---------- Editor font size ---------- */
+
+let editorFontRem = EDITOR_FONT_DEFAULT_REM;
+
+function applyEditorFontSize(rem = editorFontRem) {
+  const grid = document.querySelector('.editor-grid');
+
+  if (grid) {
+    grid.style.setProperty('--editor-font-size', `${rem}rem`);
+  }
+
+  editorFontRem = rem;
+  editor?.requestMeasure?.();
+}
+
+function syncFontSizeButtons() {
+  if (fontDecreaseButton) {
+    fontDecreaseButton.disabled = editorFontRem <= EDITOR_FONT_MIN_REM + 0.001;
+  }
+
+  if (fontIncreaseButton) {
+    fontIncreaseButton.disabled = editorFontRem >= EDITOR_FONT_MAX_REM - 0.001;
+  }
+}
+
+function loadEditorFontSize() {
+  let stored = null;
+
+  try {
+    stored = Number.parseFloat(localStorage.getItem(EDITOR_FONT_STORAGE_KEY));
+  } catch {
+    stored = null;
+  }
+
+  editorFontRem = Number.isFinite(stored)
+    ? Math.min(EDITOR_FONT_MAX_REM, Math.max(EDITOR_FONT_MIN_REM, stored))
+    : EDITOR_FONT_DEFAULT_REM;
+  applyEditorFontSize(editorFontRem);
+  syncFontSizeButtons();
+}
+
+function stepEditorFont(direction) {
+  editorFontRem = Math.min(
+    EDITOR_FONT_MAX_REM,
+    Math.max(EDITOR_FONT_MIN_REM, editorFontRem + direction * EDITOR_FONT_STEP_REM),
+  );
+  applyEditorFontSize(editorFontRem);
+  syncFontSizeButtons();
+
+  try {
+    localStorage.setItem(EDITOR_FONT_STORAGE_KEY, String(editorFontRem));
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
 function resetDraftToDefault() {
   clearLocalDraftBackup();
   window.location.reload();
@@ -516,6 +716,18 @@ function updateEditorChips(snapshot = null) {
   }
 
   chrome.setLineChip(`${lines.length} lines · active #${activeLine?.number ?? 1}`);
+
+  if (lineCountChip) {
+    lineCountChip.textContent = String(lines.length);
+  }
+
+  if (wordCountChip) {
+    const wordCount = lines.reduce(
+      (sum, line) => sum + (line.text.trim() ? line.text.trim().split(/\s+/).length : 0),
+      0,
+    );
+    wordCountChip.textContent = String(wordCount);
+  }
 }
 
 function toggleCustomField(wrapper, visible) {
@@ -760,7 +972,7 @@ function requireSelection(node) {
 }
 
 async function runRewrite(button) {
-  setExpandedToolGroup('revision');
+  setExpandedToolGroup('remix');
   const payload = requireSelection(resultNodes.rewrite);
 
   if (!payload) {
@@ -780,6 +992,7 @@ async function runRewrite(button) {
   const result = await rewriteSelection({
     text: payload.text,
     tone,
+    genre: state.selectedGenre,
     contextLines: getContextLines(),
     aiAvailable: state.aiAvailable,
   });
@@ -789,7 +1002,7 @@ async function runRewrite(button) {
 }
 
 async function runIdeaGenerator(button) {
-  setExpandedToolGroup('starter');
+  setExpandedToolGroup('sparks');
   const request = getIdeaPromptValues();
 
   if (!request.text && !request.mood && !request.anchor) {
@@ -802,6 +1015,7 @@ async function runIdeaGenerator(button) {
 
   const result = await generateLineIdeas({
     ...request,
+    genre: state.selectedGenre,
     contextLines: getContextLines(),
     aiAvailable: state.aiAvailable,
   });
@@ -811,7 +1025,7 @@ async function runIdeaGenerator(button) {
 }
 
 async function runImagery(button) {
-  setExpandedToolGroup('imagery');
+  setExpandedToolGroup('remix');
   const payload = requireSelection(resultNodes.imagery);
 
   if (!payload) {
@@ -822,6 +1036,7 @@ async function runImagery(button) {
 
   const result = await expandImagery({
     text: payload.text,
+    genre: state.selectedGenre,
     contextLines: getContextLines(),
     aiAvailable: state.aiAvailable,
   });
@@ -831,7 +1046,7 @@ async function runImagery(button) {
 }
 
 async function runMetaphor(button) {
-  setExpandedToolGroup('imagery');
+  setExpandedToolGroup('remix');
   const payload = requireSelection(resultNodes.metaphor);
 
   if (!payload) {
@@ -851,11 +1066,56 @@ async function runMetaphor(button) {
   const result = await generateMetaphors({
     text: payload.text,
     emotion,
+    genre: state.selectedGenre,
     contextLines: getContextLines(),
     aiAvailable: state.aiAvailable,
   });
 
   renderAiResult(resultNodes.metaphor, result.metaphors, result.note);
+  setBusy(button, false);
+}
+
+async function runTitleGenerator(button) {
+  setExpandedToolGroup('sparks');
+  setActiveToolCard('titles');
+  const draft = editor.getEditorText();
+
+  if (!draft.trim()) {
+    resultNodes.titles.innerHTML = '<p class="muted">Add a few lines to the draft first, then ask for title ideas.</p>';
+    return;
+  }
+
+  setBusy(button, true);
+
+  const result = await suggestTitles({
+    text: draft,
+    genre: state.selectedGenre,
+    aiAvailable: state.aiAvailable,
+  });
+
+  renderAiResult(resultNodes.titles, result.titles, result.note);
+  setBusy(button, false);
+}
+
+async function runPolish(button) {
+  setExpandedToolGroup('review');
+  setActiveToolCard('polish');
+  const draft = editor.getEditorText();
+
+  if (!draft.trim()) {
+    resultNodes.polish.innerHTML = '<p class="muted">Add a few lines to the draft first, then run the review.</p>';
+    return;
+  }
+
+  setBusy(button, true);
+
+  const result = await reviewDraft({
+    text: draft,
+    genre: state.selectedGenre,
+    aiAvailable: state.aiAvailable,
+  });
+
+  renderAiResult(resultNodes.polish, result.sections, result.note);
   setBusy(button, false);
 }
 
@@ -868,7 +1128,7 @@ async function syncAiHealth() {
       aiAvailable: state.aiAvailable,
       model: state.aiModel || 'local fallback mode',
     });
-  } catch (_error) {
+  } catch {
     state.aiAvailable = false;
     state.aiModel = null;
     chrome.setAiStatus({
@@ -884,6 +1144,7 @@ function handleEditorChange({ lines, activeLine, selectedText }) {
   renderClicheResults(lines);
   renderStatusPanel(lines);
   syncLocalDraftBackup();
+  pushDraftHistory(editor.getEditorText());
   updateAutosaveIndicator();
 }
 
@@ -898,7 +1159,7 @@ editor = createEditor({
 });
 
 openIdeaStarterButton.addEventListener('click', () => {
-  setExpandedToolGroup('starter');
+  setExpandedToolGroup('sparks');
   setActiveToolCard('starter');
   openIdeaModal();
 });
@@ -970,7 +1231,7 @@ for (const button of document.querySelectorAll('[data-run-tool]')) {
     }
 
     if (tool === 'cliches') {
-      setExpandedToolGroup('revision');
+      setExpandedToolGroup('review');
       setActiveToolCard('cliches');
       renderClicheResults();
       return;
@@ -991,6 +1252,16 @@ for (const button of document.querySelectorAll('[data-run-tool]')) {
     if (tool === 'metaphor') {
       setActiveToolCard('metaphor');
       await runMetaphor(button);
+      return;
+    }
+
+    if (tool === 'titles') {
+      await runTitleGenerator(button);
+      return;
+    }
+
+    if (tool === 'polish') {
+      await runPolish(button);
     }
   });
 }
@@ -1018,6 +1289,12 @@ metaphorEmotion.addEventListener('change', () => {
   }
 });
 
+if (genrePicker) {
+  genrePicker.addEventListener('change', () => {
+    state.selectedGenre = genrePicker.value;
+  });
+}
+
 ideaLineCount.addEventListener('change', () => {
   syncIdeaRhymePatternField();
 });
@@ -1039,4 +1316,27 @@ renderClicheResults();
 renderStatusPanel();
 syncCustomFieldVisibility();
 syncIdeaRhymePatternField();
+
+fontDecreaseButton?.addEventListener('click', () => stepEditorFont(-1));
+fontIncreaseButton?.addEventListener('click', () => stepEditorFont(1));
+
+if (draftHistoryNode) {
+  draftHistoryNode.addEventListener('click', (event) => {
+    const restoreButton = event.target.closest('[data-history-id]');
+
+    if (restoreButton) {
+      restoreDraftFromHistory(restoreButton.dataset.historyId);
+      return;
+    }
+
+    if (event.target.closest('#clear-history-button')) {
+      writeDraftHistory([]);
+      renderDraftHistory();
+      setEditorStatus('Draft history cleared.', 'success');
+    }
+  });
+}
+
+renderDraftHistory();
+loadEditorFontSize();
 await syncAiHealth();

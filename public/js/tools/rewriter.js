@@ -51,13 +51,14 @@ function localRewrite(text, tone) {
   ];
 }
 
-export async function rewriteSelection({ text, tone = 'poetic', contextLines = [], aiAvailable = false }) {
+export async function rewriteSelection({ text, tone = 'poetic', genre = '', contextLines = [], aiAvailable = false }) {
   if (aiAvailable) {
     try {
       const response = await requestAssistant({
         tool: 'rewrite',
         text,
         tone,
+        genre,
         contextLines,
       });
 

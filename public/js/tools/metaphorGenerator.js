@@ -65,13 +65,14 @@ function localMetaphors(text, emotion) {
   return stems.map((stem) => `${subject} is ${stem}.`);
 }
 
-export async function generateMetaphors({ text, emotion = 'longing', contextLines = [], aiAvailable = false }) {
+export async function generateMetaphors({ text, emotion = 'longing', genre = '', contextLines = [], aiAvailable = false }) {
   if (aiAvailable) {
     try {
       const response = await requestAssistant({
         tool: 'metaphor',
         text,
         emotion,
+        genre,
         contextLines,
       });
 

@@ -4,448 +4,594 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lyric Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <div class="app-shell">
       <header class="topbar">
-        <div class="chrome-brand">
-          <div class="brand-emblem" aria-hidden="true">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
           <div class="brand-copy">
-            <p class="eyebrow">creative writing workspace</p>
-            <h1>Lyric Studio</h1>
-            <p class="chrome-summary">A deliberate writing room for lyrics and poetry, with the draft center-stage and every tool one selection away.</p>
+            <h1 class="brand-name">Lyric Studio</h1>
+            <p class="brand-tagline">A quiet room for lyrics &amp; poetry</p>
           </div>
         </div>
 
-        <div class="chrome-controls">
-          <div class="topbar-actions">
-            <span id="ai-status" class="status-badge">Checking AI tools…</span>
-
-            <div class="topbar-controls-row">
-              <button
-                id="theme-toggle"
-                type="button"
-                class="ghost-button theme-icon-button"
-                aria-label="Switch to dark theme"
-                aria-pressed="false"
-                title="Switch to dark theme"
-              >
-                <i class="theme-icon fa-solid fa-sun" data-theme-icon aria-hidden="true"></i>
-              </button>
-
-              <div class="panel-toggle-group" role="group" aria-label="Workspace layout controls">
-                <button id="studio-rail-toggle" class="ghost-button chrome-action-button" type="button">Hide rail</button>
-                <button id="tool-panel-toggle" class="ghost-button chrome-action-button" type="button">Hide tools</button>
-                <button id="status-panel-toggle" class="ghost-button chrome-action-button" type="button">Hide analysis</button>
-              </div>
-            </div>
-          </div>
+        <div class="topbar-controls">
+          <span id="ai-status" class="status-badge">Checking AI tools…</span>
+          <button
+            id="theme-toggle"
+            type="button"
+            class="ghost-button theme-icon-button"
+            aria-label="Switch to dark theme"
+            aria-pressed="false"
+            title="Switch to dark theme"
+          >
+            <i class="theme-icon fa-solid fa-sun" data-theme-icon aria-hidden="true"></i>
+          </button>
         </div>
       </header>
 
-      <main class="workspace">
-        <aside id="studio-rail" class="studio-rail" aria-label="Studio context">
-          <section class="rail-card rail-card-focus">
-            <p class="eyebrow">Current focus</p>
-            <h2>Draft context</h2>
-            <div class="rail-meta">
-              <span id="selection-chip" class="meta-chip">Nothing selected</span>
-              <span id="line-chip" class="meta-chip">0 lines</span>
+      <div class="workspace">
+        <nav class="activity-bar" aria-label="Studio panels">
+          <button
+            id="studio-rail-toggle"
+            type="button"
+            class="activity-button"
+            aria-pressed="false"
+            aria-expanded="false"
+            aria-controls="studio-rail"
+            aria-label="Toggle context panel"
+            title="Context — what's selected, how to work"
+          >
+            <i class="fa-solid fa-bars-staggered" aria-hidden="true"></i>
+            <span class="activity-button-label">Context</span>
+          </button>
+          <button
+            id="tool-panel-toggle"
+            type="button"
+            class="activity-button"
+            aria-pressed="false"
+            aria-expanded="false"
+            aria-controls="tool-panel"
+            aria-label="Toggle tools panel"
+            title="Tools — rhyme, rewrite, imagery"
+          >
+            <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+            <span class="activity-button-label">Tools</span>
+          </button>
+          <button
+            id="status-panel-toggle"
+            type="button"
+            class="activity-button"
+            aria-pressed="false"
+            aria-expanded="false"
+            aria-controls="status-panel"
+            aria-label="Toggle analysis panel"
+            title="Analysis — cadence, repetition, structure"
+          >
+            <i class="fa-solid fa-chart-column" aria-hidden="true"></i>
+            <span class="activity-button-label">Analysis</span>
+          </button>
+        </nav>
+
+        <main class="editor-stage" aria-label="Writing editor">
+          <header class="editor-head">
+            <div class="editor-titles">
+              <p class="eyebrow">Draft canvas</p>
+              <h2 class="editor-title">The page</h2>
+              <p class="editor-copy">Blank lines make stanzas. Click a line number to jump, and select any phrase to refine it instantly.</p>
             </div>
-            <p class="rail-note">Select a phrase in the editor to send it into any tool. If nothing is selected, the active line becomes the source.</p>
+
+            <div class="editor-actions">
+              <button id="font-decrease" type="button" class="ghost-button editor-action-button font-size-button" title="Smaller text" aria-label="Decrease editor text size">A−</button>
+              <button id="font-increase" type="button" class="ghost-button editor-action-button font-size-button" title="Larger text" aria-label="Increase editor text size">A+</button>
+              <button id="save-draft-button" type="button" class="ghost-button editor-action-button">
+                <i class="fa-solid fa-download" aria-hidden="true"></i>
+                <span>Save .txt</span>
+              </button>
+              <button id="load-draft-button" type="button" class="ghost-button editor-action-button">
+                <i class="fa-solid fa-upload" aria-hidden="true"></i>
+                <span>Load .txt</span>
+              </button>
+              <button id="copy-draft-button" type="button" class="ghost-button editor-action-button">
+                <i class="fa-solid fa-copy" aria-hidden="true"></i>
+                <span>Copy</span>
+              </button>
+              <button id="reset-draft-button" type="button" class="ghost-button editor-action-button">
+                <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+                <span>Reset</span>
+              </button>
+            </div>
+            <input id="draft-file-input" type="file" accept=".txt,text/plain" hidden />
+          </header>
+
+          <div id="editor-lines" class="editor-lines" aria-live="polite"></div>
+        </main>
+      </div>
+
+      <aside id="studio-rail" class="drawer drawer-context" aria-label="Studio context">
+        <header class="drawer-header">
+          <p class="eyebrow">Studio context</p>
+          <h2 class="drawer-title">What's in focus</h2>
+        </header>
+        <div class="drawer-body">
+          <section class="drawer-section">
+            <h3 class="drawer-section-title">The source</h3>
+            <div class="context-stack">
+              <div class="context-chip">
+                <span class="context-chip-label">Source</span>
+                <span id="selection-chip" class="context-chip-value">Nothing selected</span>
+              </div>
+              <div class="context-chip">
+                <span class="context-chip-label">Draft size</span>
+                <span id="line-chip" class="context-chip-value">0 lines</span>
+              </div>
+            </div>
+            <p class="rail-note">Select a phrase to send it into any tool. If nothing is selected, the active line becomes the source.</p>
           </section>
 
-          <section class="rail-card">
-            <p class="eyebrow">Workflow</p>
+          <section class="drawer-section">
+            <h3 class="drawer-section-title">Draft history</h3>
+            <div id="draft-history" class="history-list" aria-live="polite"></div>
+            <p class="rail-note">Versions collect automatically as you write. Click one to bring it back — your current text is saved first, so nothing is lost.</p>
+          </section>
+
+          <section class="drawer-section">
+            <h3 class="drawer-section-title">A way through</h3>
             <ol class="workflow-list">
-              <li>Draft your lines in the center canvas.</li>
+              <li>Draft your lines on the page.</li>
               <li>Select a phrase or leave the cursor on an active line.</li>
-              <li>Use the tool stack to tune sound, tone, and imagery.</li>
-              <li>Check the analysis dock for rhythm, repetition, and structure.</li>
+              <li>Open <strong>Tools</strong> to tune sound, tone, and imagery.</li>
+              <li>Open <strong>Analysis</strong> to read rhythm, repetition, and structure.</li>
             </ol>
           </section>
 
-          <section class="rail-card rail-card-cues">
-            <p class="eyebrow">Use the right tool</p>
+          <section class="drawer-section">
+            <h3 class="drawer-section-title">Choosing a tool</h3>
             <div class="cue-list">
               <article class="cue-item">
-                <span>Sound</span>
-                <p>Rhymes, syllables, and line endings.</p>
+                <span class="cue-index" aria-hidden="true"><i class="fa-solid fa-lightbulb"></i></span>
+                <div>
+                  <h4>Sparks</h4>
+                  <p>Fresh line ideas, or titles drawn from the whole draft.</p>
+                </div>
               </article>
               <article class="cue-item">
-                <span>Revision</span>
-                <p>Rewrite intent, remove clichés, and simplify phrasing.</p>
+                <span class="cue-index" aria-hidden="true"><i class="fa-solid fa-music"></i></span>
+                <div>
+                  <h4>Sound</h4>
+                  <p>Rhymes, syllables, and line endings.</p>
+                </div>
               </article>
               <article class="cue-item">
-                <span>Imagery</span>
-                <p>Expand concrete detail and metaphor from a chosen feeling.</p>
+                <span class="cue-index" aria-hidden="true"><i class="fa-solid fa-arrows-rotate"></i></span>
+                <div>
+                  <h4>Remix</h4>
+                  <p>Rewrite a phrase, expand imagery, or spin a metaphor.</p>
+                </div>
+              </article>
+              <article class="cue-item">
+                <span class="cue-index" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
+                <div>
+                  <h4>Review</h4>
+                  <p>Scan for clichés, or get an editorial read of the piece.</p>
+                </div>
               </article>
             </div>
           </section>
-        </aside>
+        </div>
+      </aside>
 
-        <section class="editor-wrap" aria-label="Writing editor">
-          <div class="editor-topbar">
-            <div>
-              <p class="eyebrow">Draft canvas</p>
-              <h2>Write in the middle</h2>
-              <p class="editor-copy">Use blank lines for stanzas, click a line number to jump, and select any phrase to refine it instantly.</p>
-            </div>
+      <aside id="tool-panel" class="drawer drawer-tools" aria-label="Writing tools">
+        <header class="drawer-header">
+          <p class="eyebrow">Tool stack</p>
+          <h2 class="drawer-title">Shape the line</h2>
+          <p class="drawer-note">Selection first, active line second.</p>
+        </header>
+        <div class="drawer-body">
+          <label class="genre-field" for="global-genre">
+            <span class="genre-label">Genre</span>
+            <select id="global-genre">
+              <option value="">No genre preference</option>
+              <option value="pop">Pop</option>
+              <option value="hiphop">Hip-hop / Rap</option>
+              <option value="country">Country</option>
+              <option value="rnb">R&amp;B / Soul</option>
+              <option value="folk">Folk / Indie</option>
+              <option value="rock">Rock</option>
+              <option value="blues">Blues</option>
+              <option value="jazz">Jazz</option>
+              <option value="gospel">Gospel</option>
+              <option value="poetry">Poetry</option>
+              <option value="sonnet">Sonnet</option>
+            </select>
+          </label>
 
-            <div class="editor-legend" aria-label="Editor features">
-              <span class="legend-pill">Line addressable</span>
-              <span class="legend-pill">Selection aware</span>
-              <span class="legend-pill">Plain text first</span>
-            </div>
-          </div>
+          <div class="tool-groups">
+            <section class="tool-group" data-tool-group="sparks" aria-labelledby="tool-group-sparks">
+              <button type="button" class="tool-group-toggle" aria-expanded="false" aria-controls="tool-group-sparks-content">
+                <span class="tool-group-icon" aria-hidden="true"><i class="fa-solid fa-lightbulb"></i></span>
+                <span class="tool-group-toggle-copy">
+                  <span class="eyebrow">Sparks</span>
+                  <span id="tool-group-sparks" class="tool-group-title">Find a way in</span>
+                </span>
+                <span class="tool-group-chevron" aria-hidden="true"><i class="fa-solid fa-chevron-down"></i></span>
+              </button>
 
-          <div class="editor-stage">
-            <div class="editor-stage-head">
-              <div class="stage-dots" aria-hidden="true">
-                <span></span>
-                <span></span>
-                <span></span>
+              <div id="tool-group-sparks-content" class="tool-group-content">
+                <p class="tool-group-note">Generate fresh material — line sparks from a prompt, or a handful of titles from the whole draft.</p>
+                <section class="tool-card" data-tool-card="starter">
+                  <div class="tool-card-header">
+                    <div class="tool-card-copy">
+                      <span class="tool-icon" aria-hidden="true"><i class="fa-regular fa-lightbulb"></i></span>
+                      <div>
+                        <h4>Idea Starter</h4>
+                        <p>Open a focused prompt window for AI line sparks — openings, verses, hooks, bridges, and other moments that need a nudge.</p>
+                      </div>
+                    </div>
+                    <button id="open-idea-starter" type="button" class="tool-button">Open idea starter</button>
+                  </div>
+                  <div id="idea-results" class="tool-result muted">Launch the prompt flow in a modal when you want a fresh entry point without crowding the tool stack.</div>
+                </section>
+
+                <section class="tool-card" data-tool-card="titles">
+                  <div class="tool-card-header">
+                    <div class="tool-card-copy">
+                      <span class="tool-icon" aria-hidden="true"><i class="fa-solid fa-heading"></i></span>
+                      <div>
+                        <h4>Title Generator</h4>
+                        <p>Six title ideas drawn from the whole draft — short, evocative, on-register.</p>
+                      </div>
+                    </div>
+                    <button type="button" class="tool-button" data-run-tool="titles">Suggest titles</button>
+                  </div>
+                  <div id="titles-results" class="tool-result muted">Give the draft a few lines, then ask for title ideas.</div>
+                </section>
               </div>
+            </section>
 
-              <p>Draft freely. Revision happens around the selected phrase, not over the whole page.</p>
-            </div>
+            <section class="tool-group is-expanded" data-tool-group="sound" aria-labelledby="tool-group-sound">
+              <button type="button" class="tool-group-toggle" aria-expanded="true" aria-controls="tool-group-sound-content">
+                <span class="tool-group-icon" aria-hidden="true"><i class="fa-solid fa-music"></i></span>
+                <span class="tool-group-toggle-copy">
+                  <span class="eyebrow">Sound</span>
+                  <span id="tool-group-sound" class="tool-group-title">Tune rhyme &amp; rhythm</span>
+                </span>
+                <span class="tool-group-chevron" aria-hidden="true"><i class="fa-solid fa-chevron-down"></i></span>
+              </button>
 
-            <div id="editor-lines" class="editor-lines" aria-live="polite"></div>
+              <div id="tool-group-sound-content" class="tool-group-content">
+                <p class="tool-group-note">Rhymes, syllables, and line-shape checks when a line needs a stronger landing.</p>
+
+                <section class="tool-card" data-tool-card="rhyme">
+                  <div class="tool-card-header">
+                    <div class="tool-card-copy">
+                      <span class="tool-icon" aria-hidden="true"><i class="fa-solid fa-link"></i></span>
+                      <div>
+                        <h4>Rhyme Finder</h4>
+                        <p>Quick rhyme support for the selected word.</p>
+                      </div>
+                    </div>
+                    <button type="button" class="tool-button" data-run-tool="rhyme">Run</button>
+                  </div>
+                  <div id="rhyme-results" class="tool-result muted">Select a word or phrase to pull rhyme suggestions.</div>
+                </section>
+
+                <section class="tool-card" data-tool-card="syllables">
+                  <div class="tool-card-header">
+                    <div class="tool-card-copy">
+                      <span class="tool-icon" aria-hidden="true"><i class="fa-solid fa-ruler"></i></span>
+                      <div>
+                        <h4>Syllable Counter</h4>
+                        <p>Per-line syllables to tighten rhythm and flow.</p>
+                      </div>
+                    </div>
+                    <button type="button" class="tool-button" data-run-tool="syllables">Refresh</button>
+                  </div>
+                  <div id="syllable-results" class="tool-result muted">Line counts will appear here as you write.</div>
+                </section>
+              </div>
+            </section>
+
+            <section class="tool-group" data-tool-group="remix" aria-labelledby="tool-group-remix">
+              <button type="button" class="tool-group-toggle" aria-expanded="false" aria-controls="tool-group-remix-content">
+                <span class="tool-group-icon" aria-hidden="true"><i class="fa-solid fa-arrows-rotate"></i></span>
+                <span class="tool-group-toggle-copy">
+                  <span class="eyebrow">Remix</span>
+                  <span id="tool-group-remix" class="tool-group-title">Reshape the line</span>
+                </span>
+                <span class="tool-group-chevron" aria-hidden="true"><i class="fa-solid fa-chevron-down"></i></span>
+              </button>
+
+              <div id="tool-group-remix-content" class="tool-group-content">
+                <p class="tool-group-note">Transform a selected phrase — rewrite it, push it into imagery, or spin a fresh metaphor.</p>
+
+                <section class="tool-card" data-tool-card="rewrite">
+                  <div class="tool-card-header stacked">
+                    <div class="tool-card-copy">
+                      <span class="tool-icon" aria-hidden="true"><i class="fa-solid fa-pen-nib"></i></span>
+                      <div>
+                        <h4>Rewriter</h4>
+                        <p>Remix a selected phrase without losing the emotional center.</p>
+                      </div>
+                    </div>
+                    <div class="tone-picker" role="group" aria-label="Rewrite tone">
+                      <button type="button" class="tone-button is-active" data-tone="poetic">Poetic</button>
+                      <button type="button" class="tone-button" data-tone="darker">Darker</button>
+                      <button type="button" class="tone-button" data-tone="simpler">Simpler</button>
+                      <button type="button" class="tone-button" data-tone="emotional">Emotional</button>
+                      <button type="button" class="tone-button" data-tone="other">Other</button>
+                    </div>
+                    <label id="rewrite-tone-other-wrap" class="custom-field is-hidden" for="rewrite-tone-other" hidden>
+                      <span class="genre-label">Other tone</span>
+                      <input id="rewrite-tone-other" type="text" placeholder="e.g. wistful, surreal, sharply cynical" />
+                    </label>
+                  </div>
+                  <div class="tool-card-actions">
+                    <button type="button" class="tool-button" data-run-tool="rewrite">Rewrite</button>
+                  </div>
+                  <div id="rewrite-results" class="tool-result muted">Pick a phrase, choose a tone, and rewrite it.</div>
+                </section>
+
+                <section class="tool-card" data-tool-card="imagery">
+                  <div class="tool-card-header">
+                    <div class="tool-card-copy">
+                      <span class="tool-icon" aria-hidden="true"><i class="fa-solid fa-eye"></i></span>
+                      <div>
+                        <h4>Imagery Expander</h4>
+                        <p>Push a simple thought into richer visual language.</p>
+                      </div>
+                    </div>
+                    <button type="button" class="tool-button" data-run-tool="imagery">Expand</button>
+                  </div>
+                  <div id="imagery-results" class="tool-result muted">Selected text becomes image-rich variations here.</div>
+                </section>
+
+                <section class="tool-card" data-tool-card="metaphor">
+                  <div class="tool-card-header stacked">
+                    <div class="tool-card-copy">
+                      <span class="tool-icon" aria-hidden="true"><i class="fa-solid fa-feather"></i></span>
+                      <div>
+                        <h4>Metaphor Generator</h4>
+                        <p>Spin fresh metaphor ideas from emotion or text.</p>
+                      </div>
+                    </div>
+                    <label class="genre-field" for="metaphor-emotion">
+                      <span class="genre-label">Emotion</span>
+                      <select id="metaphor-emotion">
+                        <option value="longing">Longing</option>
+                        <option value="heartbreak">Heartbreak</option>
+                        <option value="wonder">Wonder</option>
+                        <option value="rage">Rage</option>
+                        <option value="hope">Hope</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </label>
+                    <label id="metaphor-emotion-other-wrap" class="custom-field is-hidden" for="metaphor-emotion-other" hidden>
+                      <span class="genre-label">Other emotion</span>
+                      <input id="metaphor-emotion-other" type="text" placeholder="e.g. jealousy, numbness, bittersweet relief" />
+                    </label>
+                  </div>
+                  <div class="tool-card-actions">
+                    <button type="button" class="tool-button" data-run-tool="metaphor">Generate</button>
+                  </div>
+                  <div id="metaphor-results" class="tool-result muted">Use a feeling, a phrase, or both to spark metaphor ideas.</div>
+                </section>
+              </div>
+            </section>
+
+            <section class="tool-group" data-tool-group="review" aria-labelledby="tool-group-review">
+              <button type="button" class="tool-group-toggle" aria-expanded="false" aria-controls="tool-group-review-content">
+                <span class="tool-group-icon" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
+                <span class="tool-group-toggle-copy">
+                  <span class="eyebrow">Review</span>
+                  <span id="tool-group-review" class="tool-group-title">Check the draft</span>
+                </span>
+                <span class="tool-group-chevron" aria-hidden="true"><i class="fa-solid fa-chevron-down"></i></span>
+              </button>
+
+              <div id="tool-group-review-content" class="tool-group-content">
+                <p class="tool-group-note">Second looks — scan for clichés, or get an editorial read of the whole piece.</p>
+
+                <section class="tool-card" data-tool-card="cliches">
+                  <div class="tool-card-header">
+                    <div class="tool-card-copy">
+                      <span class="tool-icon" aria-hidden="true"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                      <div>
+                        <h4>Cliché Detector</h4>
+                        <p>Find overused phrases and fresher angles.</p>
+                      </div>
+                    </div>
+                    <button type="button" class="tool-button" data-run-tool="cliches">Scan</button>
+                  </div>
+                  <div id="cliche-results" class="tool-result muted">Lines with clichés will be softly highlighted in the editor.</div>
+                </section>
+
+                <section class="tool-card" data-tool-card="polish">
+                  <div class="tool-card-header">
+                    <div class="tool-card-copy">
+                      <span class="tool-icon" aria-hidden="true"><i class="fa-solid fa-book-open"></i></span>
+                      <div>
+                        <h4>Editorial Review</h4>
+                        <p>A second-pass read: which lines earn their place, which need work, and the one opportunity to chase.</p>
+                      </div>
+                    </div>
+                    <button type="button" class="tool-button" data-run-tool="polish">Review draft</button>
+                  </div>
+                  <div id="polish-results" class="tool-result muted">Run a full-draft review once you have a few stanzas down.</div>
+                </section>
+              </div>
+            </section>
           </div>
-
-          <div class="editor-actions" aria-label="Draft actions">
-            <div class="editor-actions-copy">
-              <p class="eyebrow">Draft actions</p>
-              <p class="editor-actions-note">Save a text draft, auto-save a one-hour local backup as you work, bring one back in, or copy the whole piece in one click.</p>
-            </div>
-
-            <div class="editor-action-buttons">
-              <button id="save-draft-button" type="button" class="ghost-button editor-action-button">Save as .txt</button>
-              <button id="load-draft-button" type="button" class="ghost-button editor-action-button">Load .txt</button>
-              <button id="copy-draft-button" type="button" class="ghost-button editor-action-button">Copy all to clipboard</button>
-              <button id="reset-draft-button" type="button" class="ghost-button editor-action-button">Back to default</button>
-            </div>
-
-            <div class="editor-actions-meta">
-              <p id="autosave-indicator" class="editor-autosave-indicator muted" aria-live="polite"></p>
-              <p id="editor-shortcuts" class="editor-shortcuts muted"></p>
-            </div>
-
-            <p id="editor-action-status" class="editor-action-status muted" aria-live="polite"></p>
-            <input id="draft-file-input" type="file" accept=".txt,text/plain" hidden />
-          </div>
-        </section>
-
-        <aside id="tool-panel" class="tool-panel" aria-label="Writing tools">
-          <div class="tool-panel-header">
-            <div>
-              <p class="eyebrow">Tool stack</p>
-              <h2>Shape the line</h2>
-            </div>
-            <p class="tool-panel-note">Selection first, active line second.</p>
-          </div>
-
-          <section class="tool-group" data-tool-group="starter" aria-labelledby="tool-group-sparks">
-            <button type="button" class="tool-group-toggle" aria-expanded="false" aria-controls="tool-group-sparks-content">
-              <span class="tool-group-toggle-copy">
-                <span class="eyebrow">Starter</span>
-                <span id="tool-group-sparks" class="tool-group-title">Find a way in</span>
-                <span class="tool-group-toggle-note">Prompt-based AI sparks for openings, verses, hooks, bridges, and more.</span>
-              </span>
-              <span class="tool-group-toggle-icon" aria-hidden="true">+</span>
-            </button>
-
-            <div id="tool-group-sparks-content" class="tool-group-content">
-              <section class="tool-card" data-tool-card="starter">
-                <div class="tool-card-header">
-                  <div>
-                    <h4>Idea Starter</h4>
-                    <p>Open a focused prompt window for AI line sparks — useful for openings, verses, hooks, bridges, and other moments that need a nudge.</p>
-                  </div>
-                </div>
-                <div class="tool-card-actions">
-                  <button id="open-idea-starter" type="button" class="tool-button">Open idea starter</button>
-                </div>
-                <div class="tool-result muted">Launch the prompt flow in a modal when you want a fresh entry point without crowding the tool stack.</div>
-              </section>
-            </div>
-          </section>
-
-          <section class="tool-group is-expanded" data-tool-group="sound" aria-labelledby="tool-group-sound">
-            <button type="button" class="tool-group-toggle" aria-expanded="true" aria-controls="tool-group-sound-content">
-              <span class="tool-group-toggle-copy">
-                <span class="eyebrow">Sound</span>
-                <span id="tool-group-sound" class="tool-group-title">Tune rhyme and rhythm</span>
-                <span class="tool-group-toggle-note">Rhymes, syllables, and line-shape checks when a line needs a stronger landing.</span>
-              </span>
-              <span class="tool-group-toggle-icon" aria-hidden="true">+</span>
-            </button>
-
-            <div id="tool-group-sound-content" class="tool-group-content">
-              <section class="tool-card" data-tool-card="rhyme">
-                <div class="tool-card-header">
-                  <div>
-                    <h4>Rhyme Finder</h4>
-                    <p>Quick rhyme support for the selected word.</p>
-                  </div>
-                  <button type="button" class="tool-button" data-run-tool="rhyme">Run</button>
-                </div>
-                <div id="rhyme-results" class="tool-result muted">Select a word or phrase to pull rhyme suggestions.</div>
-              </section>
-
-              <section class="tool-card" data-tool-card="syllables">
-                <div class="tool-card-header">
-                  <div>
-                    <h4>Syllable Counter</h4>
-                    <p>Per-line syllables to tighten rhythm and flow.</p>
-                  </div>
-                  <button type="button" class="tool-button" data-run-tool="syllables">Refresh</button>
-                </div>
-                <div id="syllable-results" class="tool-result muted">Line counts will appear here as you write.</div>
-              </section>
-            </div>
-          </section>
-
-          <section class="tool-group" data-tool-group="revision" aria-labelledby="tool-group-revision">
-            <button type="button" class="tool-group-toggle" aria-expanded="false" aria-controls="tool-group-revision-content">
-              <span class="tool-group-toggle-copy">
-                <span class="eyebrow">Revision</span>
-                <span id="tool-group-revision" class="tool-group-title">Tighten meaning</span>
-                <span class="tool-group-toggle-note">Rewrites and cliché checks for lines that are close, but not quite sharp enough yet.</span>
-              </span>
-              <span class="tool-group-toggle-icon" aria-hidden="true">+</span>
-            </button>
-
-            <div id="tool-group-revision-content" class="tool-group-content">
-              <section class="tool-card" data-tool-card="rewrite">
-                <div class="tool-card-header stacked">
-                  <div>
-                    <h4>Rewriter</h4>
-                    <p>Remix a selected phrase without losing the emotional center.</p>
-                  </div>
-                  <div class="tone-picker" role="group" aria-label="Rewrite tone">
-                    <button type="button" class="tone-button is-active" data-tone="poetic">Poetic</button>
-                    <button type="button" class="tone-button" data-tone="darker">Darker</button>
-                    <button type="button" class="tone-button" data-tone="simpler">Simpler</button>
-                    <button type="button" class="tone-button" data-tone="emotional">Emotional</button>
-                    <button type="button" class="tone-button" data-tone="other">Other</button>
-                  </div>
-                  <label id="rewrite-tone-other-wrap" class="field-stack custom-field is-hidden" for="rewrite-tone-other" hidden>
-                    <span>Other tone</span>
-                    <input id="rewrite-tone-other" type="text" placeholder="e.g. wistful, surreal, sharply cynical" />
-                  </label>
-                </div>
-                <div class="tool-card-actions">
-                  <button type="button" class="tool-button" data-run-tool="rewrite">Rewrite</button>
-                </div>
-                <div id="rewrite-results" class="tool-result muted">Pick a phrase, choose a tone, and rewrite it.</div>
-              </section>
-
-              <section class="tool-card" data-tool-card="cliches">
-                <div class="tool-card-header">
-                  <div>
-                    <h4>Cliché Detector</h4>
-                    <p>Find overused phrases and fresher angles.</p>
-                  </div>
-                  <button type="button" class="tool-button" data-run-tool="cliches">Scan</button>
-                </div>
-                <div id="cliche-results" class="tool-result muted">Lines with clichés will be softly highlighted in the editor.</div>
-              </section>
-            </div>
-          </section>
-
-          <section class="tool-group" data-tool-group="imagery" aria-labelledby="tool-group-imagery">
-            <button type="button" class="tool-group-toggle" aria-expanded="false" aria-controls="tool-group-imagery-content">
-              <span class="tool-group-toggle-copy">
-                <span class="eyebrow">Imagery</span>
-                <span id="tool-group-imagery" class="tool-group-title">Broaden image and feeling</span>
-                <span class="tool-group-toggle-note">Use these when the line has meaning but needs atmosphere, texture, or a fresher metaphorical angle.</span>
-              </span>
-              <span class="tool-group-toggle-icon" aria-hidden="true">+</span>
-            </button>
-
-            <div id="tool-group-imagery-content" class="tool-group-content">
-              <section class="tool-card" data-tool-card="imagery">
-                <div class="tool-card-header">
-                  <div>
-                    <h4>Imagery Expander</h4>
-                    <p>Push a simple thought into richer visual language.</p>
-                  </div>
-                  <button type="button" class="tool-button" data-run-tool="imagery">Expand</button>
-                </div>
-                <div id="imagery-results" class="tool-result muted">Selected text becomes image-rich variations here.</div>
-              </section>
-
-              <section class="tool-card" data-tool-card="metaphor">
-                <div class="tool-card-header stacked">
-                  <div>
-                    <h4>Metaphor Generator</h4>
-                    <p>Spin fresh metaphor ideas from emotion or text.</p>
-                  </div>
-                  <label class="field-stack" for="metaphor-emotion">
-                    <span>Emotion</span>
-                    <select id="metaphor-emotion">
-                      <option value="longing">Longing</option>
-                      <option value="heartbreak">Heartbreak</option>
-                      <option value="wonder">Wonder</option>
-                      <option value="rage">Rage</option>
-                      <option value="hope">Hope</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </label>
-                  <label id="metaphor-emotion-other-wrap" class="field-stack custom-field is-hidden" for="metaphor-emotion-other" hidden>
-                    <span>Other emotion</span>
-                    <input id="metaphor-emotion-other" type="text" placeholder="e.g. jealousy, numbness, bittersweet relief" />
-                  </label>
-                </div>
-                <div class="tool-card-actions">
-                  <button type="button" class="tool-button" data-run-tool="metaphor">Generate</button>
-                </div>
-                <div id="metaphor-results" class="tool-result muted">Use a feeling, a phrase, or both to spark metaphor ideas.</div>
-              </section>
-            </div>
-          </section>
-        </aside>
-      </main>
-
-      <section id="status-panel" class="status-panel" aria-label="Draft analysis">
-        <div class="status-panel-header">
-          <div>
-            <p class="eyebrow">Analysis dock</p>
-            <h2>Read the shape of the draft</h2>
-          </div>
-          <p>Useful checks for cadence, repetition, and structure — visible when needed, quiet when not.</p>
         </div>
+      </aside>
 
-        <div class="status-grid">
-          <article class="status-card">
-            <h3>Cadence</h3>
-            <p id="rhythm-summary" class="muted">Add a few lines to see rhythmic balance.</p>
+      <aside id="status-panel" class="drawer drawer-analysis" aria-label="Draft analysis">
+        <header class="drawer-header">
+          <p class="eyebrow">Analysis dock</p>
+          <h2 class="drawer-title">Read the shape of the draft</h2>
+          <p class="drawer-note">Quiet checks for cadence, repetition, and structure — visible when needed, silent when not.</p>
+        </header>
+        <div class="drawer-body">
+          <section class="status-card">
+            <h3 class="status-card-title">Cadence</h3>
+            <p id="rhythm-summary" class="status-summary muted">Add a few lines to see rhythmic balance.</p>
             <div id="rhythm-lines" class="status-detail"></div>
-          </article>
+          </section>
 
-          <article class="status-card">
-            <h3>Repetition</h3>
-            <p id="repetition-summary" class="muted">Repeated words and line endings will appear here.</p>
+          <section class="status-card">
+            <h3 class="status-card-title">Repetition</h3>
+            <p id="repetition-summary" class="status-summary muted">Repeated words and line endings will appear here.</p>
             <div id="repetition-detail" class="status-detail"></div>
-          </article>
+          </section>
 
-          <article class="status-card">
-            <h3>Structure</h3>
-            <p id="structure-summary" class="muted">Line count, stanza breaks, and shape cues live here.</p>
+          <section class="status-card">
+            <h3 class="status-card-title">Structure</h3>
+            <p id="structure-summary" class="status-summary muted">Line count, stanza breaks, and shape cues live here.</p>
             <div id="structure-detail" class="status-detail"></div>
-          </article>
+          </section>
         </div>
-      </section>
+      </aside>
 
-      <footer class="site-footer" aria-label="Project links">
-        <p class="site-footer-copy">
-          Lyric Studio is open sourced at
-          <a class="site-footer-link" href="https://github.com/HBIDamian/LyricStudio" target="_blank" rel="noreferrer noopener">github.com/HBIDamian/LyricStudio</a>.
-        </p>
-        <p class="site-footer-copy">
-          Help fund this project via
-          <a class="site-footer-link" href="https://ko-fi.com/hbidamian" target="_blank" rel="noreferrer noopener">ko-fi.com/hbidamian</a>.
-        </p>
+      <div id="drawer-scrim" class="drawer-scrim" aria-hidden="true"></div>
+
+      <footer class="statusbar" aria-label="Studio status">
+        <div class="statusbar-group statusbar-left">
+          <span id="autosave-indicator" class="statusbar-item muted" aria-live="polite"></span>
+          <span id="editor-action-status" class="statusbar-item muted" aria-live="polite"></span>
+        </div>
+        <div class="statusbar-group statusbar-right">
+          <span class="statusbar-item statusbar-chip">
+            <span class="statusbar-chip-label">Source</span>
+            <span id="status-selection" class="statusbar-chip-value">Nothing selected</span>
+          </span>
+          <span class="statusbar-item statusbar-chip">
+            <span class="statusbar-chip-label">Lines</span>
+            <span id="line-count" class="statusbar-chip-value">0</span>
+          </span>
+          <span class="statusbar-item statusbar-chip">
+            <span class="statusbar-chip-label">Words</span>
+            <span id="word-count" class="statusbar-chip-value">0</span>
+          </span>
+          <span id="editor-shortcuts" class="statusbar-item statusbar-shortcuts muted"></span>
+          <span class="statusbar-divider" aria-hidden="true"></span>
+          <a
+            class="statusbar-link"
+            href="https://github.com/HBIDamian/LyricStudio"
+            target="_blank"
+            rel="noreferrer noopener"
+            title="Source on GitHub"
+            aria-label="Source on GitHub"
+          ><i class="fa-brands fa-github" aria-hidden="true"></i></a>
+          <a
+            class="statusbar-link"
+            href="https://ko-fi.com/hbidamian"
+            target="_blank"
+            rel="noreferrer noopener"
+            title="Support on Ko-fi"
+            aria-label="Support on Ko-fi"
+          ><i class="fa-solid fa-mug-hot" aria-hidden="true"></i></a>
+        </div>
       </footer>
+    </div>
 
-      <div id="idea-modal" class="modal-shell" role="dialog" aria-modal="true" aria-labelledby="idea-modal-title" hidden>
-        <div id="idea-modal-backdrop" class="modal-backdrop"></div>
-        <div class="modal-card">
-          <div class="modal-header">
-            <div>
-              <p class="eyebrow">Guided AI sparks</p>
-              <h2 id="idea-modal-title">Idea Starter</h2>
-              <p class="modal-copy">Answer a few questions and get several line sparks for whichever part of the piece you need — suggestive, flexible, and never the whole song on a silver platter.</p>
-            </div>
-            <button id="close-idea-modal" type="button" class="ghost-button modal-close-button" aria-label="Close idea starter" title="Close">
-              <span aria-hidden="true">×</span>
-            </button>
+    <div id="idea-modal" class="modal-shell" role="dialog" aria-modal="true" aria-labelledby="idea-modal-title" hidden>
+      <div id="idea-modal-backdrop" class="modal-backdrop"></div>
+      <div class="modal-card">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">Guided AI sparks</p>
+            <h2 id="idea-modal-title" class="modal-title">Idea Starter</h2>
+            <p class="modal-copy">Answer a few questions and get several line sparks for whichever part of the piece you need — suggestive, flexible, and never the whole song on a silver platter.</p>
+          </div>
+          <button id="close-idea-modal" type="button" class="ghost-button modal-close-button" aria-label="Close idea starter" title="Close">
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="question-grid" aria-label="Idea starter questions">
+            <label class="field-stack" for="idea-part">
+              <span class="genre-label">Which part needs ideas?</span>
+              <select id="idea-part">
+                <option value="any part of the piece">Any part / not sure yet</option>
+                <option value="opening lines">Opening lines</option>
+                <option value="verse">Verse</option>
+                <option value="pre-chorus">Pre-chorus</option>
+                <option value="chorus or hook">Chorus / hook</option>
+                <option value="bridge">Bridge</option>
+                <option value="ending or final image">Ending / final image</option>
+                <option value="turning point">Turning point</option>
+              </select>
+            </label>
+
+            <label class="field-stack" for="idea-format">
+              <span class="genre-label">What are you writing?</span>
+              <select id="idea-format">
+                <option value="song lyrics">Song lyrics</option>
+                <option value="poem">Poem</option>
+                <option value="rap verse">Rap verse</option>
+                <option value="spoken word piece">Spoken word piece</option>
+                <option value="chorus or hook">Chorus / hook</option>
+                <option value="freeform lines">Freeform lines</option>
+              </select>
+            </label>
+
+            <label class="field-stack" for="idea-topic">
+              <span class="genre-label">What do you want it to be about?</span>
+              <input id="idea-topic" type="text" placeholder="e.g. missing someone after moving away" />
+            </label>
+
+            <label class="field-stack" for="idea-mood">
+              <span class="genre-label">What feeling should it carry?</span>
+              <input id="idea-mood" type="text" placeholder="e.g. intimate, restless, hopeful, bitter" />
+            </label>
+
+            <label class="field-stack" for="idea-perspective">
+              <span class="genre-label">Who is speaking?</span>
+              <select id="idea-perspective">
+                <option value="first person">First person — I / me</option>
+                <option value="second person">Second person — you</option>
+                <option value="third person">Third person — they / he / she</option>
+                <option value="collective voice">Collective voice — we / us</option>
+                <option value="observer">Observer / storyteller</option>
+              </select>
+            </label>
+
+            <label class="field-stack" for="idea-line-count">
+              <span class="genre-label">How many lines per idea?</span>
+              <select id="idea-line-count">
+                <option value="1" selected>1 line</option>
+                <option value="2">2 lines</option>
+                <option value="3">3 lines</option>
+                <option value="4">4 lines</option>
+              </select>
+            </label>
+
+            <label id="idea-rhyme-pattern-wrap" class="field-stack custom-field is-hidden" for="idea-rhyme-pattern" hidden>
+              <span class="genre-label">Rhyme pattern</span>
+              <select id="idea-rhyme-pattern"></select>
+            </label>
+
+            <label class="field-stack question-grid-wide" for="idea-anchor">
+              <span class="genre-label">Any image, phrase, or detail to weave in?</span>
+              <input id="idea-anchor" type="text" placeholder="e.g. train station coffee, a blue porch light, voicemail at 2 AM" />
+            </label>
           </div>
 
-          <div class="modal-body">
-            <div class="question-grid" aria-label="Idea starter questions">
-              <label class="field-stack" for="idea-part">
-                <span>Which part needs ideas?</span>
-                <select id="idea-part">
-                  <option value="any part of the piece">Any part / not sure yet</option>
-                  <option value="opening lines">Opening lines</option>
-                  <option value="verse">Verse</option>
-                  <option value="pre-chorus">Pre-chorus</option>
-                  <option value="chorus or hook">Chorus / hook</option>
-                  <option value="bridge">Bridge</option>
-                  <option value="ending or final image">Ending / final image</option>
-                  <option value="turning point">Turning point</option>
-                </select>
-              </label>
-
-              <label class="field-stack" for="idea-format">
-                <span>What are you writing?</span>
-                <select id="idea-format">
-                  <option value="song lyrics">Song lyrics</option>
-                  <option value="poem">Poem</option>
-                  <option value="rap verse">Rap verse</option>
-                  <option value="spoken word piece">Spoken word piece</option>
-                  <option value="chorus or hook">Chorus / hook</option>
-                  <option value="freeform lines">Freeform lines</option>
-                </select>
-              </label>
-
-              <label class="field-stack" for="idea-topic">
-                <span>What do you want it to be about?</span>
-                <input id="idea-topic" type="text" placeholder="e.g. missing someone after moving away" />
-              </label>
-
-              <label class="field-stack" for="idea-mood">
-                <span>What feeling should it carry?</span>
-                <input id="idea-mood" type="text" placeholder="e.g. intimate, restless, hopeful, bitter" />
-              </label>
-
-              <label class="field-stack" for="idea-perspective">
-                <span>Who is speaking?</span>
-                <select id="idea-perspective">
-                  <option value="first person">First person — I / me</option>
-                  <option value="second person">Second person — you</option>
-                  <option value="third person">Third person — they / he / she</option>
-                  <option value="collective voice">Collective voice — we / us</option>
-                  <option value="observer">Observer / storyteller</option>
-                </select>
-              </label>
-
-              <label class="field-stack" for="idea-line-count">
-                <span>How many lines per idea?</span>
-                <select id="idea-line-count">
-                  <option value="1" selected>1 line</option>
-                  <option value="2">2 lines</option>
-                  <option value="3">3 lines</option>
-                  <option value="4">4 lines</option>
-                </select>
-              </label>
-
-              <label id="idea-rhyme-pattern-wrap" class="field-stack custom-field is-hidden" for="idea-rhyme-pattern" hidden>
-                <span>Rhyme pattern</span>
-                <select id="idea-rhyme-pattern"></select>
-              </label>
-
-              <label class="field-stack question-grid-wide" for="idea-anchor">
-                <span>Any image, phrase, or detail to weave in?</span>
-                <input id="idea-anchor" type="text" placeholder="e.g. train station coffee, a blue porch light, voicemail at 2 AM" />
-              </label>
-            </div>
-
-            <div class="modal-actions">
-              <button type="button" class="tool-button" data-run-tool="ideas">Spark ideas</button>
-            </div>
-
-            <div id="idea-results" class="tool-result muted">Answer a couple of questions, then generate several line ideas you can cherry-pick from.</div>
+          <div class="modal-actions">
+            <button type="button" class="tool-button" data-run-tool="ideas">Spark ideas</button>
           </div>
+
+          <div id="idea-results" class="tool-result muted">Answer a couple of questions, then generate several line ideas you can cherry-pick from.</div>
         </div>
       </div>
     </div>

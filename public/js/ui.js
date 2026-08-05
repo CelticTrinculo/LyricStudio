@@ -128,7 +128,6 @@ export function setupChrome({
   selectionChip,
   lineChip,
 }) {
-  const mobileLayoutQuery = window.matchMedia('(max-width: 720px)');
   let themePreference = getSavedThemePreference();
 
   const updateTheme = (nextPreference, { persist = true } = {}) => {
@@ -141,36 +140,49 @@ export function setupChrome({
     applyThemePreference(nextPreference, themeToggleButton);
   };
 
-  const setToolPanelCollapsed = (collapsed) => {
-    toolPanel.classList.toggle('is-collapsed', collapsed);
-    workspace.classList.toggle('is-panel-collapsed', collapsed);
-    toolToggle.textContent = collapsed ? 'Show tools' : 'Hide tools';
-    toolToggle.setAttribute('aria-pressed', String(!collapsed));
+  const scrim = document.querySelector('#drawer-scrim');
+
+  const drawers = [
+    { toggle: studioRailToggle, panel: studioRail },
+    { toggle: toolToggle, panel: toolPanel },
+    { toggle: statusToggle, panel: statusPanel },
+  ];
+
+  const setDrawerOpen = (target, open) => {
+    const anyOpen = drawers.some(({ panel }) => panel === target?.panel && open);
+
+    drawers.forEach(({ toggle, panel }) => {
+      const isOpen = panel === target?.panel && open;
+      panel.classList.toggle('is-open', isOpen);
+      toggle.classList.toggle('is-active', isOpen);
+      toggle.setAttribute('aria-pressed', String(isOpen));
+      toggle.setAttribute('aria-expanded', String(isOpen));
+    });
+
+    if (scrim) {
+      scrim.classList.toggle('is-visible', anyOpen);
+    }
+
+    workspace.classList.toggle('has-drawer-open', anyOpen);
+    document.body.classList.toggle('has-open-drawer', anyOpen);
   };
 
-  const setStudioRailCollapsed = (collapsed) => {
-    studioRail.classList.toggle('is-collapsed', collapsed);
-    workspace.classList.toggle('is-rail-collapsed', collapsed);
-    studioRailToggle.textContent = collapsed ? 'Show rail' : 'Hide rail';
-    studioRailToggle.setAttribute('aria-pressed', String(!collapsed));
-  };
-
-  const setStatusPanelCollapsed = (collapsed) => {
-    statusPanel.classList.toggle('is-collapsed', collapsed);
-    statusToggle.textContent = collapsed ? 'Show analysis' : 'Hide analysis';
-    statusToggle.setAttribute('aria-pressed', String(!collapsed));
-  };
-
-  studioRailToggle.addEventListener('click', () => {
-    setStudioRailCollapsed(!studioRail.classList.contains('is-collapsed'));
+  drawers.forEach(({ toggle, panel }) => {
+    toggle.addEventListener('click', () => {
+      setDrawerOpen({ panel }, !panel.classList.contains('is-open'));
+    });
   });
 
-  toolToggle.addEventListener('click', () => {
-    setToolPanelCollapsed(!toolPanel.classList.contains('is-collapsed'));
+  scrim?.addEventListener('click', () => {
+    setDrawerOpen(null, false);
   });
 
-  statusToggle.addEventListener('click', () => {
-    setStatusPanelCollapsed(!statusPanel.classList.contains('is-collapsed'));
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || document.body.classList.contains('has-open-modal')) {
+      return;
+    }
+
+    setDrawerOpen(null, false);
   });
 
   if (themeToggleButton) {
@@ -181,10 +193,8 @@ export function setupChrome({
 
   updateTheme(themePreference, { persist: false });
 
-  const collapsePanelsByDefault = mobileLayoutQuery.matches;
-  setStudioRailCollapsed(studioRail.classList.contains('is-collapsed'));
-  setToolPanelCollapsed(collapsePanelsByDefault || toolPanel.classList.contains('is-collapsed'));
-  setStatusPanelCollapsed(collapsePanelsByDefault || statusPanel.classList.contains('is-collapsed'));
+  // Start from a clean room: every drawer closed, editor front and center.
+  setDrawerOpen(null, false);
 
   return {
     setAiStatus({ aiAvailable, model }) {

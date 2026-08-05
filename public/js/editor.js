@@ -264,6 +264,9 @@ export function createEditor({ container, onChange, onSelectionChange }) {
     setFlaggedLines(_lineEntries) {
       // Styling hooks for flagged lines can be added in a later CodeMirror pass.
     },
+    requestMeasure() {
+      view.requestMeasure()
+    },
     focusLine,
     insertBelowActive(text) {
       const activeLine = view.state.doc.lineAt(view.state.selection.main.head)

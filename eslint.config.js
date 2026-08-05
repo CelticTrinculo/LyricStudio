@@ -1,0 +1,61 @@
+import js from '@eslint/js';
+
+export default [
+  js.configs.recommended,
+  {
+    languageOptions: {
+      ecmaVersion: 2024,
+      sourceType: 'module',
+      globals: {
+        // Browser globals for public JS files
+        window: 'readonly',
+        document: 'readonly',
+        navigator: 'readonly',
+        localStorage: 'readonly',
+        fetch: 'readonly',
+        console: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        Blob: 'readonly',
+        URL: 'readonly',
+        URLSearchParams: 'readonly',
+        HTMLElement: 'readonly',
+        HTMLInputElement: 'readonly',
+        HTMLButtonElement: 'readonly',
+        HTMLSelectElement: 'readonly',
+        HTMLAnchorElement: 'readonly',
+        HTMLTextAreaElement: 'readonly',
+        File: 'readonly',
+        FileReader: 'readonly',
+        TextDecoder: 'readonly',
+        ReadableStream: 'readonly',
+        Node: 'readonly',
+        Element: 'readonly',
+        Event: 'readonly',
+        CustomEvent: 'readonly',
+        KeyboardEvent: 'readonly',
+        MouseEvent: 'readonly',
+        matchMedia: 'readonly',
+        // Node globals
+        process: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+      },
+    },
+    rules: {
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      'no-console': 'off',
+      'prefer-const': 'error',
+      'no-var': 'error',
+      'no-throw-literal': 'error',
+      'eqeqeq': ['error', 'always'],
+      'no-eval': 'error',
+      'no-implied-eval': 'error',
+      'no-new-func': 'error',
+    },
+  },
+  {
+    ignores: ['node_modules/', 'dist/', '*.log', 'public/js/editor.js'],
+  },
+];
