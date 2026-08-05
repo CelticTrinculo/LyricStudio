@@ -1,7 +1,7 @@
 import { requestAssistant } from '../api.js';
 import { stripInlineMarkdownFormatting } from '../textCleanup.js';
 
-function cleanList(text) {
+export function cleanList(text) {
   return text
     .split(/\n+/)
     .map((line) => stripInlineMarkdownFormatting(line.replace(/^\s*(?:[-*]|\d+[.)])\s*/, '').trim()))

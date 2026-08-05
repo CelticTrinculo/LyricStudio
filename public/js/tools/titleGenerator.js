@@ -74,7 +74,7 @@ function cleanTitleLine(line = '') {
   );
 }
 
-function cleanTitleList(text) {
+export function cleanTitleList(text) {
   const seen = new Set();
   const titles = [];
 

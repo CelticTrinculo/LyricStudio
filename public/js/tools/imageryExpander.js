@@ -5,7 +5,7 @@ const VISUALS = ['smoke-blue', 'amber-lit', 'rain-glossed', 'velvet-dark', 'silv
 const TEXTURES = ['static in the ribs', 'dust on the windowsill', 'salt on the mouth', 'heat under the skin', 'echo in the floorboards'];
 const MOTIONS = ['leaning into the room', 'drifting through the rafters', 'collecting at the edges', 'moving like slow weather', 'opening like a bruise at dusk'];
 
-function splitOptions(text) {
+export function splitOptions(text) {
   return text
     .split(/\n+/)
     .map((line) => stripInlineMarkdownFormatting(line.replace(/^\s*(?:[-*]|\d+[.)])\s*/, '').trim()))

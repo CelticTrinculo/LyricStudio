@@ -20,7 +20,7 @@ function normalizeRhymePattern(rhymePattern = '', lineCount = 1) {
   return /^[A-Z]+$/.test(normalizedPattern) ? normalizedPattern : '';
 }
 
-function cleanIdeas(text, lineCount = 1) {
+export function cleanIdeas(text, lineCount = 1) {
   const normalizedLineCount = Math.min(4, Math.max(1, Number.parseInt(lineCount, 10) || 1));
   const rawLines = text
     .split('\n')

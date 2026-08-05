@@ -1,7 +1,7 @@
 import { requestAssistant } from '../api.js';
 import { stripInlineMarkdownFormatting } from '../textCleanup.js';
 
-function cleanSections(text) {
+export function cleanSections(text) {
   return text
     .split(/\n{2,}/)
     .map((section) => stripInlineMarkdownFormatting(section.trim()))

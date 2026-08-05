@@ -39,7 +39,7 @@ const EMOTION_BANK = {
   ],
 };
 
-function cleanBullets(text) {
+export function cleanBullets(text) {
   return text
     .split(/\n+/)
     .map((line) => stripInlineMarkdownFormatting(line.replace(/^\s*(?:[-*]|\d+[.)])\s*/, '').trim()))

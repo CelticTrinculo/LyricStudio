@@ -1,15 +1,15 @@
-import { getAiHealth } from './api.js';
+import { getAiHealth, streamAssistant } from './api.js';
 import { buildDraftAnalysis } from './analysis.js';
 import { createEditor, DEFAULT_EDITOR_TEXT } from './editor.js';
 import { findRhymes } from './tools/rhymeFinder.js';
 import { analyzeLines } from './tools/syllableCounter.js';
 import { detectClichesByLine } from './tools/clicheDetector.js';
-import { rewriteSelection } from './tools/rewriter.js';
-import { expandImagery } from './tools/imageryExpander.js';
-import { generateMetaphors } from './tools/metaphorGenerator.js';
-import { generateLineIdeas } from './tools/ideaGenerator.js';
-import { suggestTitles } from './tools/titleGenerator.js';
-import { reviewDraft } from './tools/polisher.js';
+import { rewriteSelection, cleanList as cleanRewriteList } from './tools/rewriter.js';
+import { expandImagery, splitOptions as cleanImageryList } from './tools/imageryExpander.js';
+import { generateMetaphors, cleanBullets as cleanMetaphorList } from './tools/metaphorGenerator.js';
+import { generateLineIdeas, cleanIdeas } from './tools/ideaGenerator.js';
+import { suggestTitles, cleanTitleList } from './tools/titleGenerator.js';
+import { reviewDraft, cleanSections as cleanPolishSections } from './tools/polisher.js';
 import {
   escapeHtml,
   renderMetricList,
@@ -977,6 +977,41 @@ function requireSelection(node) {
   return payload;
 }
 
+async function runAiToolWithStreaming({
+  node,
+  button,
+  buildPayload,
+  clean,
+  fallback,
+  note = (model) => `Generated with ${model}.`,
+}) {
+  setBusy(button, true);
+
+  try {
+    if (!state.aiAvailable) {
+      throw new Error('AI unavailable');
+    }
+
+    node.innerHTML = '<div class="stream-box"></div>';
+    const box = node.querySelector('.stream-box');
+    let streamedText = '';
+
+    const model = await streamAssistant(buildPayload(), {
+      onDelta: (delta) => {
+        streamedText += delta;
+        box.textContent = streamedText;
+      },
+    });
+
+    renderAiResult(node, clean(streamedText), note(model));
+  } catch {
+    node.innerHTML = '';
+    await fallback();
+  } finally {
+    setBusy(button, false);
+  }
+}
+
 async function runRewrite(button) {
   setExpandedToolGroup('remix');
   const payload = requireSelection(resultNodes.rewrite);
@@ -993,18 +1028,23 @@ async function runRewrite(button) {
     return;
   }
 
-  setBusy(button, true);
-
-  const result = await rewriteSelection({
+  const params = {
     text: payload.text,
     tone,
     genre: state.selectedGenre,
     contextLines: getContextLines(),
-    aiAvailable: state.aiAvailable,
-  });
+  };
 
-  renderAiResult(resultNodes.rewrite, result.variants, result.note);
-  setBusy(button, false);
+  await runAiToolWithStreaming({
+    node: resultNodes.rewrite,
+    button,
+    buildPayload: () => ({ tool: 'rewrite', ...params }),
+    clean: cleanRewriteList,
+    fallback: async () => {
+      const result = await rewriteSelection({ ...params, aiAvailable: state.aiAvailable });
+      renderAiResult(resultNodes.rewrite, result.variants, result.note);
+    },
+  });
 }
 
 async function runIdeaGenerator(button) {
@@ -1017,17 +1057,23 @@ async function runIdeaGenerator(button) {
     return;
   }
 
-  setBusy(button, true);
-
-  const result = await generateLineIdeas({
+  const params = {
     ...request,
     genre: state.selectedGenre,
     contextLines: getContextLines(),
-    aiAvailable: state.aiAvailable,
-  });
+  };
 
-  renderAiResult(resultNodes.ideas, result.ideas, result.note);
-  setBusy(button, false);
+  await runAiToolWithStreaming({
+    node: resultNodes.ideas,
+    button,
+    buildPayload: () => ({ tool: 'ideas', ...params }),
+    clean: (text) => cleanIdeas(text, request.lineCount),
+    note: (model) => `Generated with ${model}. Built as line sparks, not a finished draft.`,
+    fallback: async () => {
+      const result = await generateLineIdeas({ ...params, aiAvailable: state.aiAvailable });
+      renderAiResult(resultNodes.ideas, result.ideas, result.note);
+    },
+  });
 }
 
 async function runImagery(button) {
@@ -1038,17 +1084,22 @@ async function runImagery(button) {
     return;
   }
 
-  setBusy(button, true);
-
-  const result = await expandImagery({
+  const params = {
     text: payload.text,
     genre: state.selectedGenre,
     contextLines: getContextLines(),
-    aiAvailable: state.aiAvailable,
-  });
+  };
 
-  renderAiResult(resultNodes.imagery, result.variants, result.note);
-  setBusy(button, false);
+  await runAiToolWithStreaming({
+    node: resultNodes.imagery,
+    button,
+    buildPayload: () => ({ tool: 'imagery', ...params }),
+    clean: cleanImageryList,
+    fallback: async () => {
+      const result = await expandImagery({ ...params, aiAvailable: state.aiAvailable });
+      renderAiResult(resultNodes.imagery, result.variants, result.note);
+    },
+  });
 }
 
 async function runMetaphor(button) {
@@ -1067,18 +1118,23 @@ async function runMetaphor(button) {
     return;
   }
 
-  setBusy(button, true);
-
-  const result = await generateMetaphors({
+  const params = {
     text: payload.text,
     emotion,
     genre: state.selectedGenre,
     contextLines: getContextLines(),
-    aiAvailable: state.aiAvailable,
-  });
+  };
 
-  renderAiResult(resultNodes.metaphor, result.metaphors, result.note);
-  setBusy(button, false);
+  await runAiToolWithStreaming({
+    node: resultNodes.metaphor,
+    button,
+    buildPayload: () => ({ tool: 'metaphor', ...params }),
+    clean: cleanMetaphorList,
+    fallback: async () => {
+      const result = await generateMetaphors({ ...params, aiAvailable: state.aiAvailable });
+      renderAiResult(resultNodes.metaphor, result.metaphors, result.note);
+    },
+  });
 }
 
 async function runTitleGenerator(button) {
@@ -1091,16 +1147,21 @@ async function runTitleGenerator(button) {
     return;
   }
 
-  setBusy(button, true);
-
-  const result = await suggestTitles({
+  const params = {
     text: draft,
     genre: state.selectedGenre,
-    aiAvailable: state.aiAvailable,
-  });
+  };
 
-  renderAiResult(resultNodes.titles, result.titles, result.note);
-  setBusy(button, false);
+  await runAiToolWithStreaming({
+    node: resultNodes.titles,
+    button,
+    buildPayload: () => ({ tool: 'titles', ...params }),
+    clean: cleanTitleList,
+    fallback: async () => {
+      const result = await suggestTitles({ ...params, aiAvailable: state.aiAvailable });
+      renderAiResult(resultNodes.titles, result.titles, result.note);
+    },
+  });
 }
 
 async function runPolish(button) {
@@ -1113,16 +1174,22 @@ async function runPolish(button) {
     return;
   }
 
-  setBusy(button, true);
-
-  const result = await reviewDraft({
+  const params = {
     text: draft,
     genre: state.selectedGenre,
-    aiAvailable: state.aiAvailable,
-  });
+  };
 
-  renderAiResult(resultNodes.polish, result.sections, result.note);
-  setBusy(button, false);
+  await runAiToolWithStreaming({
+    node: resultNodes.polish,
+    button,
+    buildPayload: () => ({ tool: 'polish', ...params }),
+    clean: cleanPolishSections,
+    note: (model) => `Reviewed with ${model}.`,
+    fallback: async () => {
+      const result = await reviewDraft({ ...params, aiAvailable: state.aiAvailable });
+      renderAiResult(resultNodes.polish, result.sections, result.note);
+    },
+  });
 }
 
 async function syncAiHealth() {
