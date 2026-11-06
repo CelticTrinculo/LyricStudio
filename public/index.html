@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=0.7" />
     <title>Lyric Studio</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -17,7 +18,7 @@
     <div class="app-shell">
       <header class="topbar">
         <div class="brand">
-          <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+          <img class="brand-mark" src="/favicon.png" alt="" aria-hidden="true" draggable="false" />
           <div class="brand-copy">
             <h1 class="brand-name">Lyric Studio</h1>
             <p class="brand-tagline">A quiet room for lyrics &amp; poetry</p>
@@ -174,7 +175,7 @@
                 <span class="cue-index" aria-hidden="true"><i class="fa-solid fa-lightbulb"></i></span>
                 <div>
                   <h4>Sparks</h4>
-                  <p>Fresh line ideas, or titles drawn from the whole draft.</p>
+                  <p>Fresh line ideas, titles from the whole draft, or a playful parody.</p>
                 </div>
               </article>
               <article class="cue-item">
@@ -261,7 +262,7 @@
               </button>
 
               <div id="tool-group-sparks-content" class="tool-group-content">
-                <p class="tool-group-note">Generate fresh material — line sparks from a prompt, or a handful of titles from the whole draft.</p>
+                <p class="tool-group-note">Generate fresh material — line sparks from a prompt, a handful of titles, or a playful parody of the whole draft.</p>
                 <section class="tool-card" data-tool-card="starter">
                   <div class="tool-card-header">
                     <div class="tool-card-copy">
@@ -288,6 +289,20 @@
                     <button type="button" class="tool-button" data-run-tool="titles">Suggest titles</button>
                   </div>
                   <div id="titles-results" class="tool-result muted">Give the draft a few lines, then ask for title ideas.</div>
+                </section>
+
+                <section class="tool-card" data-tool-card="parody">
+                  <div class="tool-card-header">
+                    <div class="tool-card-copy">
+                      <span class="tool-icon" aria-hidden="true"><i class="fa-solid fa-masks-theater"></i></span>
+                      <div>
+                        <h4>Parody</h4>
+                        <p>Turn the whole draft into a playful parody — same shape and rhythm, new subject.</p>
+                      </div>
+                    </div>
+                    <button id="open-parody" type="button" class="tool-button">Open parody</button>
+                  </div>
+                  <div class="tool-result muted">Launch the prompt flow in a modal when you want to spoof the draft without crowding the tool stack.</div>
                 </section>
               </div>
             </section>
@@ -535,7 +550,7 @@
               </details>
               <details class="faq-item">
                 <summary>Are my drafts saved anywhere?</summary>
-                <p>Yes, locally. Your draft is auto-backed-up in your browser for an hour, and the Context panel keeps a small history of versions you can restore. Nothing is sent to a server except the text you explicitly send to an AI tool.</p>
+                <p>Yes, locally. Your draft is auto-backed-up in your browser for an hour, and tshe Context panel keeps a small history of versions you can restore. Nothing is sent to a server except the text you explicitly send to an AI tool.</p>
               </details>
               <details class="faq-item">
                 <summary>Do I need an API key to use this?</summary>
@@ -669,7 +684,7 @@
               </select>
             </label>
 
-            <label id="idea-rhyme-pattern-wrap" class="field-stack custom-field is-hidden" for="idea-rhyme-pattern" hidden>
+            <label id="idea-rhyme-pattern-wrap" class="field-stack custom-field question-grid-wide is-hidden" for="idea-rhyme-pattern" hidden>
               <span class="genre-label">Rhyme pattern</span>
               <select id="idea-rhyme-pattern"></select>
             </label>
@@ -678,13 +693,82 @@
               <span class="genre-label">Any image, phrase, or detail to weave in?</span>
               <input id="idea-anchor" type="text" placeholder="e.g. train station coffee, a blue porch light, voicemail at 2 AM" />
             </label>
+
+            <label class="context-toggle question-grid-wide" for="idea-use-draft">
+              <input id="idea-use-draft" type="checkbox" checked />
+              <span>
+                <span class="context-toggle-title">Use my draft as context</span>
+                <span class="context-toggle-hint">Let the AI read the lines you've already written so ideas match the theme or continue the story. Turn it off for fresh sparks that ignore the draft.</span>
+              </span>
+            </label>
           </div>
+
+          <div id="idea-results" class="tool-result muted">Answer a couple of questions, then generate several line ideas you can cherry-pick from.</div>
 
           <div class="modal-actions">
             <button type="button" class="tool-button" data-run-tool="ideas">Spark ideas</button>
           </div>
+        </div>
+      </div>
+    </div>
 
-          <div id="idea-results" class="tool-result muted">Answer a couple of questions, then generate several line ideas you can cherry-pick from.</div>
+    <div id="parody-modal" class="modal-shell" role="dialog" aria-modal="true" aria-labelledby="parody-modal-title" hidden>
+      <div id="parody-modal-backdrop" class="modal-backdrop"></div>
+      <div class="modal-card">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">Guided AI parody</p>
+            <h2 id="parody-modal-title" class="modal-title">Parody</h2>
+            <p class="modal-copy">Answer a few questions and the whole draft gets a playful doppelgänger — same line shapes, rhythm, and rhymes, but a brand-new subject. It may not provide you with a good response, but it's still a fun way to explore new ideas.</p>
+          </div>
+          <button id="close-parody-modal" type="button" class="ghost-button modal-close-button" aria-label="Close parody" title="Close">
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="question-grid" aria-label="Parody questions">
+            <label class="field-stack question-grid-wide" for="parody-topic">
+              <span class="genre-label">What do you want the parody to be about?</span>
+              <input id="parody-topic" type="text" placeholder="e.g. waiting in line at the DMV" />
+            </label>
+
+            <label class="field-stack question-grid-wide" for="parody-words">
+              <span class="genre-label">What words do you want to include?</span>
+              <input id="parody-words" type="text" placeholder="e.g. laminate, fluorescent lights, ticket B-42" />
+            </label>
+
+            <label class="field-stack question-grid-wide" for="parody-style">
+              <span class="genre-label">How should it land?</span>
+              <select id="parody-style">
+                <option value="playful">Playful</option>
+                <option value="absurd">Absurd</option>
+                <option value="deadpan">Deadpan</option>
+                <option value="satirical">Satirical</option>
+                <option value="silly">Silly</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+
+            <label id="parody-style-other-wrap" class="field-stack custom-field is-hidden" for="parody-style-other" hidden>
+              <span class="genre-label">Other style</span>
+              <input id="parody-style-other" type="text" placeholder="e.g. lovingly roasting, office memo" />
+            </label>
+
+            <label class="context-toggle question-grid-wide" for="parody-use-draft">
+              <input id="parody-use-draft" type="checkbox" checked />
+              <span>
+                <span class="context-toggle-title">Use my draft as the source</span>
+                <span class="context-toggle-hint">The parody mirrors the lines you have written — same structure and mood, new subject. Turn it off and the assistant spoofs a fresh draft instead.</span>
+              </span>
+            </label>
+          </div>
+
+          <div id="parody-results" class="tool-result muted">Answer a couple of questions, then generate a playful parody of the whole draft.</div>
+
+          <div class="modal-actions">
+            <button type="button" class="tool-button" data-run-tool="parody">Write parody</button>
+          </div>
         </div>
       </div>
     </div>

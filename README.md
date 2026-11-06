@@ -8,7 +8,7 @@ Lyric Studio is a lightweight creative-writing app for poets, lyricists, and son
 
 - **Line-based writing studio** with numbered lines and quick navigation
 - **Local-first writing tools** for rhymes, syllables, clichés, and draft analysis
-- **AI-assisted creative tools** for rewrites, imagery, metaphors, and idea sparks
+- **AI-assisted creative tools** for rewrites, imagery, metaphors, idea sparks, and parody
 - **Autosave protection** with one-hour local draft recovery
 - **Import, export, and copy** tools for moving drafts in and out quickly
 - **Light / dark / system theme support**
@@ -20,6 +20,7 @@ Lyric Studio is a lightweight creative-writing app for poets, lyricists, and son
 
 - Clean central editor for poetry and lyrics
 - Line-number gutter aligned with the draft
+- Hover any line for its syllable count — or hold a line number on touchscreens
 - Keyboard shortcut hints and writing-focused controls
 - Save draft as `.txt`
 - Load `.txt` drafts back into the editor
@@ -33,6 +34,7 @@ Lyric Studio is a lightweight creative-writing app for poets, lyricists, and son
 - **Imagery expander** for more vivid lines
 - **Metaphor generator** for fresh comparisons
 - **Idea Starter** modal for section-specific line sparks
+- **Parody** tool that turns the whole draft into a playful parody on a new subject
 
 ### Analysis tools
 

@@ -1,11 +1,13 @@
-import { EditorState } from 'https://esm.sh/@codemirror/state@6.5.2?target=es2022'
+import { EditorState, StateEffect, StateField } from 'https://esm.sh/@codemirror/state@6.5.2?target=es2022'
 import {
   EditorView,
   highlightActiveLine,
   highlightActiveLineGutter,
+  hoverTooltip,
   keymap,
   lineNumbers,
   placeholder,
+  showTooltip,
 } from 'https://esm.sh/@codemirror/view@6.38.6?target=es2022&deps=@codemirror/state@6.5.2'
 import {
   defaultKeymap,
@@ -13,6 +15,7 @@ import {
   historyKeymap,
   indentWithTab,
 } from 'https://esm.sh/@codemirror/commands@6.8.1?target=es2022&deps=@codemirror/state@6.5.2,@codemirror/view@6.38.6'
+import { countSyllables } from './tools/syllableCounter.js'
 
 export const DEFAULT_EDITOR_TEXT = [
   'When the room gets quiet enough,',
@@ -22,6 +25,13 @@ export const DEFAULT_EDITOR_TEXT = [
 ].join('\n')
 
 const EDITOR_PLACEHOLDER = 'Write a line…\nThen another one.\nLeave blank lines for stanzas.'
+
+const SYLLABLE_HINT_DELAY_MS = 700
+const SYLLABLE_HINT_HOLD_MS = 550
+const SYLLABLE_HINT_AUTO_HIDE_MS = 4000
+
+let lastHoverMouse = { x: 0, y: 0 }
+let hoverTooltipDom = null
 
 function shouldAutofocusEditor() {
   return window.matchMedia('(hover: hover) and (pointer: fine)').matches
@@ -85,6 +95,82 @@ function focusEditorViewLine(targetView, lineNumber, selectWholeLine = true, upd
 
   return true
 }
+
+/* ---------- Syllable hints (hover + long-press) ---------- */
+
+function buildSyllableTooltip(view, lineNumber, { atCursor = false } = {}) {
+  let line
+
+  try {
+    line = view.state.doc.line(lineNumber)
+  } catch {
+    return null
+  }
+
+  const count = countSyllables(line.text)
+
+  if (!count) {
+    return null
+  }
+
+  const label = count === 1 ? '1 syllable' : `${count} syllables`
+
+  return {
+    pos: line.from,
+    // Keep the hint alive while the cursor travels anywhere along the line.
+    end: atCursor ? line.to : line.from,
+    above: true,
+    create: () => {
+      const dom = document.createElement('div')
+      dom.className = 'cm-syllable-hint'
+      dom.textContent = label
+
+      if (!atCursor) {
+        // Long-press hint: anchored at the line start, next to the gutter.
+        return { dom }
+      }
+
+      hoverTooltipDom = dom
+
+      return {
+        dom,
+        // Track the cursor: the pill centers on the mouse horizontally
+        // and floats just above it.
+        getCoords: () => ({
+          top: lastHoverMouse.y,
+          bottom: lastHoverMouse.y,
+          left: lastHoverMouse.x,
+          right: lastHoverMouse.x,
+        }),
+        get offset() {
+          return { x: -(dom.offsetWidth / 2), y: 6 }
+        },
+      }
+    },
+  }
+}
+
+// Touch long-press tooltip: a StateField feeding the showTooltip facet,
+// so a descriptor can be shown or cleared with a simple state effect.
+const setTouchSyllableTooltip = StateEffect.define()
+
+const touchSyllableTooltipField = StateField.define({
+  create: () => null,
+  update: (value, tr) => {
+    for (const effect of tr.effects) {
+      if (effect.is(setTouchSyllableTooltip)) {
+        return effect.value
+      }
+    }
+
+    if (tr.docChanged) {
+      return null
+    }
+
+    return value
+  },
+  provide: (field) => showTooltip.from(field),
+})
 
 export function createEditor({ container, onChange, onSelectionChange }) {
   container.innerHTML = '<div class="editor-grid"><div class="editor-host"></div></div>'
@@ -174,6 +260,11 @@ export function createEditor({ container, onChange, onSelectionChange }) {
           },
         }),
         EditorView.lineWrapping,
+        hoverTooltip((currentView, pos) => {
+          const line = currentView.state.doc.lineAt(pos)
+          return buildSyllableTooltip(currentView, line.number, { atCursor: true })
+        }, { hoverTime: SYLLABLE_HINT_DELAY_MS, hideOnChange: true }),
+        touchSyllableTooltipField,
         highlightActiveLine(),
         highlightActiveLineGutter(),
         EditorState.tabSize.of(2),
@@ -201,29 +292,130 @@ export function createEditor({ container, onChange, onSelectionChange }) {
     parent: editorHost,
   })
 
-  const handleGutterPointerDown = (event) => {
+  /* ---------- Syllable hints: gutter long-press (touch) ---------- */
+
+  let touchHoldTimer = null
+  let touchAutoHideTimer = null
+  let suppressGutterTap = false
+
+  function showTouchSyllableTooltip(lineNumber) {
+    view.dispatch({
+      effects: setTouchSyllableTooltip.of(buildSyllableTooltip(view, lineNumber)),
+    })
+  }
+
+  function dismissTouchSyllableTooltip() {
+    if (view.state.field(touchSyllableTooltipField)) {
+      view.dispatch({
+        effects: setTouchSyllableTooltip.of(null),
+      })
+    }
+  }
+
+  const getGutterLineNumber = (event) => {
     const target = event.target instanceof Element ? event.target : null
     const gutterElement = target?.closest('.cm-lineNumbers .cm-gutterElement')
 
     if (!gutterElement) {
-      return
+      return null
     }
 
-    const lineNumber = parseDisplayedLineNumber(gutterElement.textContent)
+    return parseDisplayedLineNumber(gutterElement.textContent)
+  }
+
+  const handleGutterPointerDown = (event) => {
+    const lineNumber = getGutterLineNumber(event)
 
     if (!lineNumber) {
+      dismissTouchSyllableTooltip()
       return
     }
 
     event.preventDefault()
-    focusLine(lineNumber)
+    suppressGutterTap = false
+    window.clearTimeout(touchHoldTimer)
+    touchHoldTimer = window.setTimeout(() => {
+      suppressGutterTap = true
+      showTouchSyllableTooltip(lineNumber)
+      touchAutoHideTimer = window.setTimeout(dismissTouchSyllableTooltip, SYLLABLE_HINT_AUTO_HIDE_MS)
+    }, SYLLABLE_HINT_HOLD_MS)
+  }
+
+  const handleGutterPointerUp = (event) => {
+    window.clearTimeout(touchHoldTimer)
+    touchHoldTimer = null
+
+    if (suppressGutterTap) {
+      suppressGutterTap = false
+      event.preventDefault()
+      return
+    }
+
+    const lineNumber = getGutterLineNumber(event)
+
+    if (lineNumber) {
+      focusLine(lineNumber)
+    }
+  }
+
+  const handleGutterPointerCancel = () => {
+    window.clearTimeout(touchHoldTimer)
+    touchHoldTimer = null
+    suppressGutterTap = false
+  }
+
+  const handleContextMenu = (event) => {
+    if (getGutterLineNumber(event) !== null) {
+      event.preventDefault()
+    }
+  }
+
+  const handleScrollDismissTouchHint = () => {
+    dismissTouchSyllableTooltip()
   }
 
   const handleHashChange = () => {
     syncLineHash()
   }
 
-  view.dom.addEventListener('mousedown', handleGutterPointerDown)
+  const handleHoverMouseMove = (event) => {
+    if (event.pointerType !== 'mouse') {
+      return
+    }
+
+    lastHoverMouse = { x: event.clientX, y: event.clientY }
+
+    if (!hoverTooltipDom) {
+      return
+    }
+
+    if (!hoverTooltipDom.isConnected) {
+      hoverTooltipDom = null
+      return
+    }
+
+    const shell = hoverTooltipDom.closest('.cm-tooltip')
+
+    if (!shell) {
+      return
+    }
+
+    // Follow the cursor: centered horizontally, floating just above it.
+    const rect = shell.getBoundingClientRect()
+    const left = Math.max(4, Math.min(event.clientX - rect.width / 2, window.innerWidth - rect.width - 4))
+    const aboveTop = event.clientY - rect.height - 6
+    const top = aboveTop < 4 ? event.clientY + 10 : aboveTop
+
+    shell.style.left = `${left}px`
+    shell.style.top = `${top}px`
+  }
+
+  view.dom.addEventListener('pointermove', handleHoverMouseMove)
+  view.dom.addEventListener('pointerdown', handleGutterPointerDown)
+  view.dom.addEventListener('pointerup', handleGutterPointerUp)
+  view.dom.addEventListener('pointercancel', handleGutterPointerCancel)
+  view.dom.addEventListener('contextmenu', handleContextMenu)
+  view.scrollDOM.addEventListener('scroll', handleScrollDismissTouchHint, { passive: true })
   window.addEventListener('hashchange', handleHashChange)
 
   queueMicrotask(() => {
@@ -285,8 +477,16 @@ export function createEditor({ container, onChange, onSelectionChange }) {
       focusLine(activeLine.number + 1, false)
     },
     destroy() {
-      view.dom.removeEventListener('mousedown', handleGutterPointerDown)
+      view.dom.removeEventListener('pointermove', handleHoverMouseMove)
+      view.dom.removeEventListener('pointerdown', handleGutterPointerDown)
+      view.dom.removeEventListener('pointerup', handleGutterPointerUp)
+      view.dom.removeEventListener('pointercancel', handleGutterPointerCancel)
+      view.dom.removeEventListener('contextmenu', handleContextMenu)
+      view.scrollDOM.removeEventListener('scroll', handleScrollDismissTouchHint)
       window.removeEventListener('hashchange', handleHashChange)
+      window.clearTimeout(touchHoldTimer)
+      window.clearTimeout(touchAutoHideTimer)
+      hoverTooltipDom = null
       view.destroy()
     },
   }

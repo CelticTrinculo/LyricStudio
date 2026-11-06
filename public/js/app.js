@@ -9,6 +9,7 @@ import { expandImagery, splitOptions as cleanImageryList } from './tools/imagery
 import { generateMetaphors, cleanBullets as cleanMetaphorList } from './tools/metaphorGenerator.js';
 import { generateLineIdeas, cleanIdeas } from './tools/ideaGenerator.js';
 import { suggestTitles, cleanTitleList } from './tools/titleGenerator.js';
+import { generateParody, cleanParody } from './tools/parodyGenerator.js';
 import { reviewDraft, cleanSections as cleanPolishSections } from './tools/polisher.js';
 import {
   escapeHtml,
@@ -39,6 +40,10 @@ const ideaModal = document.querySelector('#idea-modal');
 const ideaModalBackdrop = document.querySelector('#idea-modal-backdrop');
 const openIdeaStarterButton = document.querySelector('#open-idea-starter');
 const closeIdeaModalButton = document.querySelector('#close-idea-modal');
+const parodyModal = document.querySelector('#parody-modal');
+const parodyModalBackdrop = document.querySelector('#parody-modal-backdrop');
+const openParodyButton = document.querySelector('#open-parody');
+const closeParodyModalButton = document.querySelector('#close-parody-modal');
 const ideaPart = document.querySelector('#idea-part');
 const ideaFormat = document.querySelector('#idea-format');
 const ideaTopic = document.querySelector('#idea-topic');
@@ -48,6 +53,13 @@ const ideaLineCount = document.querySelector('#idea-line-count');
 const ideaRhymePatternWrap = document.querySelector('#idea-rhyme-pattern-wrap');
 const ideaRhymePattern = document.querySelector('#idea-rhyme-pattern');
 const ideaAnchor = document.querySelector('#idea-anchor');
+const ideaUseDraft = document.querySelector('#idea-use-draft');
+const parodyTopic = document.querySelector('#parody-topic');
+const parodyWords = document.querySelector('#parody-words');
+const parodyStyle = document.querySelector('#parody-style');
+const parodyStyleOtherWrap = document.querySelector('#parody-style-other-wrap');
+const parodyStyleOther = document.querySelector('#parody-style-other');
+const parodyUseDraft = document.querySelector('#parody-use-draft');
 const metaphorEmotion = document.querySelector('#metaphor-emotion');
 const metaphorEmotionOtherWrap = document.querySelector('#metaphor-emotion-other-wrap');
 const metaphorEmotionOther = document.querySelector('#metaphor-emotion-other');
@@ -69,7 +81,7 @@ const fontIncreaseButton = document.querySelector('#font-increase');
 const draftHistoryNode = document.querySelector('#draft-history');
 
 const LOCAL_DRAFT_STORAGE_KEY = 'lyric-studio-local-draft-backup';
-const LOCAL_DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
+const LOCAL_DRAFT_TTL_MS = 60 * 60 * 1000;
 const HISTORY_STORAGE_KEY = 'lyric-studio-draft-history';
 const HISTORY_MAX_ITEMS = 8;
 const HISTORY_MIN_GAP_MS = 20 * 1000;
@@ -134,6 +146,7 @@ const resultNodes = {
   metaphor: document.querySelector('#metaphor-results'),
   titles: document.querySelector('#titles-results'),
   polish: document.querySelector('#polish-results'),
+  parody: document.querySelector('#parody-results'),
 };
 
 const statusNodes = {
@@ -568,10 +581,18 @@ function resetDraftToDefault() {
 }
 
 function handleKeyboardShortcuts(event) {
-  if (event.key === 'Escape' && ideaModal && !ideaModal.hidden) {
-    event.preventDefault();
-    closeIdeaModal();
-    return;
+  if (event.key === 'Escape') {
+    if (parodyModal && !parodyModal.hidden) {
+      event.preventDefault();
+      closeParodyModal();
+      return;
+    }
+
+    if (ideaModal && !ideaModal.hidden) {
+      event.preventDefault();
+      closeIdeaModal();
+      return;
+    }
   }
 
   if (event.defaultPrevented || event.repeat) {
@@ -748,9 +769,15 @@ function toggleCustomField(wrapper, visible) {
 function syncCustomFieldVisibility() {
   const useCustomTone = state.selectedTone === 'other';
   const useCustomEmotion = metaphorEmotion.value === 'other';
+  const useCustomParodyStyle = parodyStyle.value === 'other';
 
   toggleCustomField(rewriteToneOtherWrap, useCustomTone);
   toggleCustomField(metaphorEmotionOtherWrap, useCustomEmotion);
+  toggleCustomField(parodyStyleOtherWrap, useCustomParodyStyle);
+
+  // When the custom-style field is hidden, the style select spans the
+  // full question grid instead of sitting in a half-empty row.
+  parodyStyle.parentElement?.classList.toggle('question-grid-wide', !useCustomParodyStyle);
 }
 
 function syncIdeaRhymePatternField() {
@@ -797,6 +824,12 @@ function getSelectedMetaphorEmotion() {
   return metaphorEmotion.value === 'other'
     ? metaphorEmotionOther.value.trim()
     : metaphorEmotion.value;
+}
+
+function getSelectedParodyStyle() {
+  return parodyStyle.value === 'other'
+    ? parodyStyleOther.value.trim()
+    : parodyStyle.value;
 }
 
 function getRhymeZoneUrl(target, type = 'perfect') {
@@ -952,6 +985,30 @@ function closeIdeaModal() {
   lastFocusedElement?.focus?.();
 }
 
+function openParodyModal() {
+  if (!parodyModal) {
+    return;
+  }
+
+  lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  parodyModal.hidden = false;
+  document.body.classList.add('has-open-modal');
+
+  window.setTimeout(() => {
+    parodyTopic?.focus();
+  }, 0);
+}
+
+function closeParodyModal() {
+  if (!parodyModal || parodyModal.hidden) {
+    return;
+  }
+
+  parodyModal.hidden = true;
+  document.body.classList.remove('has-open-modal');
+  lastFocusedElement?.focus?.();
+}
+
 function getIdeaPromptValues() {
   const parsedLineCount = Number.parseInt(ideaLineCount.value, 10);
   const normalizedLineCount = Number.isFinite(parsedLineCount)
@@ -967,6 +1024,7 @@ function getIdeaPromptValues() {
     lineCount: normalizedLineCount,
     rhymePattern: normalizedLineCount > 1 ? ideaRhymePattern.value : '',
     anchor: ideaAnchor.value.trim(),
+    useDraft: ideaUseDraft?.checked ?? true,
   };
 }
 
@@ -1064,7 +1122,7 @@ async function runIdeaGenerator(button) {
   const params = {
     ...request,
     genre: state.selectedGenre,
-    contextLines: getContextLines(),
+    contextLines: request.useDraft ? getContextLines() : [],
   };
 
   await runAiToolWithStreaming({
@@ -1168,6 +1226,58 @@ async function runTitleGenerator(button) {
   });
 }
 
+async function runParody(button) {
+  setExpandedToolGroup('sparks');
+  setActiveToolCard('parody');
+  const useDraft = parodyUseDraft?.checked ?? true;
+  const draft = editor.getEditorText();
+
+  if (useDraft && !draft.trim()) {
+    resultNodes.parody.innerHTML = '<p class="muted">Add a few lines to the draft first — the parody needs something to spoof.</p>';
+    return;
+  }
+
+  const topic = parodyTopic.value.trim();
+  const words = parodyWords.value.trim();
+
+  if (!topic && !words) {
+    resultNodes.parody.innerHTML = '<p class="muted">Give the parody a subject, or at least a word or two to weave in.</p>';
+    parodyTopic.focus();
+    return;
+  }
+
+  const style = getSelectedParodyStyle();
+
+  if (!style) {
+    resultNodes.parody.innerHTML = '<p class="muted">Choose “Other” and type the style you want first.</p>';
+    parodyStyleOther.focus();
+    return;
+  }
+
+  const params = {
+    text: useDraft ? draft : '',
+    topic,
+    words,
+    tone: style,
+    genre: state.selectedGenre,
+  };
+
+  await runAiToolWithStreaming({
+    node: resultNodes.parody,
+    button,
+    buildPayload: () => ({ tool: 'parody', ...params }),
+    clean: (text) => {
+      const parody = cleanParody(text);
+      return parody ? [parody] : [];
+    },
+    note: (model) => `Generated with ${model}. The original draft is untouched.`,
+    fallback: async () => {
+      const result = await generateParody({ ...params, aiAvailable: state.aiAvailable });
+      renderAiResult(resultNodes.parody, result.parody ? [result.parody] : [], result.note);
+    },
+  });
+}
+
 async function runPolish(button) {
   setExpandedToolGroup('review');
   setActiveToolCard('polish');
@@ -1247,6 +1357,20 @@ closeIdeaModalButton.addEventListener('click', () => {
 
 ideaModalBackdrop.addEventListener('click', () => {
   closeIdeaModal();
+});
+
+openParodyButton.addEventListener('click', () => {
+  setExpandedToolGroup('sparks');
+  setActiveToolCard('parody');
+  openParodyModal();
+});
+
+closeParodyModalButton.addEventListener('click', () => {
+  closeParodyModal();
+});
+
+parodyModalBackdrop.addEventListener('click', () => {
+  closeParodyModal();
 });
 
 saveDraftButton.addEventListener('click', () => {
@@ -1337,6 +1461,11 @@ for (const button of document.querySelectorAll('[data-run-tool]')) {
       return;
     }
 
+    if (tool === 'parody') {
+      await runParody(button);
+      return;
+    }
+
     if (tool === 'polish') {
       await runPolish(button);
     }
@@ -1363,6 +1492,14 @@ metaphorEmotion.addEventListener('change', () => {
 
   if (metaphorEmotion.value === 'other') {
     metaphorEmotionOther.focus();
+  }
+});
+
+parodyStyle.addEventListener('change', () => {
+  syncCustomFieldVisibility();
+
+  if (parodyStyle.value === 'other') {
+    parodyStyleOther.focus();
   }
 });
 
