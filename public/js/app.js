@@ -2,6 +2,14 @@ import { getAiHealth, streamAssistant } from './api.js';
 import { buildDraftAnalysis } from './analysis.js';
 import { createEditor, DEFAULT_EDITOR_TEXT } from './editor.js';
 import { findRhymes } from './tools/rhymeFinder.js';
+import { fetchRhymes, fetchWordAlternatives } from './tools/datamuse.js';
+import {
+  buildPrintSheet,
+  getDraftTitle,
+  parseDraftBlocks,
+  toChordPro,
+  toMarkdown,
+} from './tools/exporters.js';
 import { analyzeLines } from './tools/syllableCounter.js';
 import { detectClichesByLine } from './tools/clicheDetector.js';
 import { rewriteSelection, cleanList as cleanRewriteList } from './tools/rewriter.js';
@@ -139,6 +147,7 @@ const chrome = setupChrome({
 const resultNodes = {
   ideas: document.querySelector('#idea-results'),
   rhyme: document.querySelector('#rhyme-results'),
+  words: document.querySelector('#words-results'),
   syllables: document.querySelector('#syllable-results'),
   cliches: document.querySelector('#cliche-results'),
   rewrite: document.querySelector('#rewrite-results'),
@@ -156,6 +165,12 @@ const statusNodes = {
   repetitionDetail: document.querySelector('#repetition-detail'),
   structureSummary: document.querySelector('#structure-summary'),
   structureDetail: document.querySelector('#structure-detail'),
+  sectionsSummary: document.querySelector('#sections-summary'),
+  sectionsDetail: document.querySelector('#sections-detail'),
+  schemeSummary: document.querySelector('#scheme-summary'),
+  schemeDetail: document.querySelector('#scheme-detail'),
+  soundSummary: document.querySelector('#sound-summary'),
+  soundDetail: document.querySelector('#sound-detail'),
 };
 
 const state = {
@@ -219,7 +234,7 @@ function slugify(value = '') {
     .slice(0, 40);
 }
 
-function buildDraftFilename() {
+function buildDraftFilename(extension = 'txt') {
   const firstLine = editor.getLines().find((line) => line.text.trim())?.text ?? '';
   const slug = slugify(firstLine) || 'lyric-studio-draft';
   const now = new Date();
@@ -228,7 +243,7 @@ function buildDraftFilename() {
     String(now.getMonth() + 1).padStart(2, '0'),
     String(now.getDate()).padStart(2, '0'),
   ].join('-');
-  return `${slug}-${dateStamp}.txt`;
+  return `${slug}-${dateStamp}.${extension}`;
 }
 
 function formatTime(value) {
@@ -645,20 +660,68 @@ function setEditorStatus(message, state = 'info') {
   delete editorActionStatus.dataset.state;
 }
 
-function saveDraftAsText() {
-  const draftText = editor.getEditorText();
-  const blob = new Blob([draftText], { type: 'text/plain;charset=utf-8' });
+function downloadTextFile(content, filename, mimeType = 'text/plain;charset=utf-8') {
+  const blob = new Blob([content], { type: mimeType });
   const downloadUrl = URL.createObjectURL(blob);
   const link = document.createElement('a');
 
   link.href = downloadUrl;
-  link.download = buildDraftFilename();
+  link.download = filename;
   document.body.append(link);
   link.click();
   link.remove();
 
   window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 0);
-  setEditorStatus(`Saved ${link.download}`, 'success');
+}
+
+function saveDraftAsText() {
+  const filename = buildDraftFilename('txt');
+  downloadTextFile(editor.getEditorText(), filename);
+  setEditorStatus(`Saved ${filename}`, 'success');
+}
+
+function exportDraft(format) {
+  const text = editor.getEditorText();
+
+  if (!text.trim()) {
+    setEditorStatus('The draft is empty — nothing to export yet.', 'error');
+    return;
+  }
+
+  const blocks = parseDraftBlocks(text);
+
+  if (format === 'print') {
+    printLyricSheet(blocks);
+    return;
+  }
+
+  if (format === 'chordpro') {
+    const filename = buildDraftFilename('cho');
+    downloadTextFile(toChordPro(blocks, getDraftTitle(blocks)), filename);
+    setEditorStatus(`Exported ${filename}`, 'success');
+    return;
+  }
+
+  const filename = buildDraftFilename('md');
+  downloadTextFile(toMarkdown(blocks), filename, 'text/markdown;charset=utf-8');
+  setEditorStatus(`Exported ${filename}`, 'success');
+}
+
+function printLyricSheet(blocks) {
+  const previousTitle = document.title;
+  const sheet = buildPrintSheet(blocks, getDraftTitle(blocks));
+
+  document.body.append(sheet);
+  document.title = getDraftTitle(blocks);
+
+  const cleanup = () => {
+    sheet.remove();
+    document.title = previousTitle;
+    window.removeEventListener('afterprint', cleanup);
+  };
+
+  window.addEventListener('afterprint', cleanup);
+  window.print();
 }
 
 async function copyAllToClipboard() {
@@ -848,29 +911,121 @@ function getRhymeZoneUrl(target, type = 'perfect') {
   return `https://www.rhymezone.com/r/rhyme.cgi?${params.toString()}`;
 }
 
-function renderRhymeResults() {
-  const payload = getSelectionPayload();
-  const rhymeResults = findRhymes(payload.text, editor.getEditorText());
+let rhymeRequestId = 0;
 
-  if (!rhymeResults.target) {
+async function renderRhymeResults() {
+  const requestId = ++rhymeRequestId;
+  const payload = getSelectionPayload();
+  const localResults = findRhymes(payload.text, editor.getEditorText());
+
+  if (!localResults.target) {
     resultNodes.rhyme.innerHTML = '<p class="muted">Select a word or phrase to pull rhyme suggestions.</p>';
     return;
   }
 
-  const perfectUrl = getRhymeZoneUrl(rhymeResults.target, 'perfect');
-  const nearUrl = getRhymeZoneUrl(rhymeResults.target, 'nry');
-
-  resultNodes.rhyme.innerHTML = `
-    <div>
-      <p class="inline-note">Target word</p>
-      <p><strong>${escapeHtml(rhymeResults.target)}</strong></p>
-    </div>
+  const target = localResults.target;
+  const perfectUrl = getRhymeZoneUrl(target, 'perfect');
+  const nearUrl = getRhymeZoneUrl(target, 'nry');
+  const linkRow = `
     <div class="external-link-row">
       <a class="external-link" href="${escapeHtml(perfectUrl)}" target="_blank" rel="noreferrer noopener">Open perfect rhymes on RhymeZone</a>
       <a class="external-link" href="${escapeHtml(nearUrl)}" target="_blank" rel="noreferrer noopener">Open near rhymes on RhymeZone</a>
     </div>
-    <p class="inline-note">Safe link-out only — no RhymeZone scraping inside the app.</p>
   `;
+
+  resultNodes.rhyme.innerHTML = `
+    <div>
+      <p class="inline-note">Target word</p>
+      <p><strong>${escapeHtml(target)}</strong></p>
+    </div>
+    <p class="muted">Looking up rhymes…</p>
+    ${linkRow}
+  `;
+
+  let rhymes = null;
+  let failed = false;
+
+  try {
+    rhymes = await fetchRhymes(target);
+  } catch {
+    failed = true;
+  }
+
+  if (requestId !== rhymeRequestId) {
+    return;
+  }
+
+  const perfect = rhymes?.perfect?.length ? rhymes.perfect : localResults.perfect;
+  const near = rhymes?.near?.length ? rhymes.near : localResults.near;
+  const usedLocal = !rhymes?.perfect?.length && !rhymes?.near?.length;
+  const sourceNote = failed
+    ? 'Datamuse is unreachable right now, so these are from the built-in list.'
+    : usedLocal
+      ? 'Datamuse had no matches, so these are from the built-in list.'
+      : 'Rhymes from Datamuse. Only the selected word was sent to that service.';
+
+  resultNodes.rhyme.innerHTML = `
+    <div>
+      <p class="inline-note">Target word</p>
+      <p><strong>${escapeHtml(target)}</strong></p>
+    </div>
+    <div>
+      <p class="inline-note">Perfect rhymes</p>
+      ${renderTokenList(perfect, { emptyText: 'No perfect rhymes found.' })}
+    </div>
+    <div>
+      <p class="inline-note">Near rhymes</p>
+      ${renderTokenList(near, { emptyText: 'No near rhymes found.', soft: true })}
+    </div>
+    ${linkRow}
+    <p class="inline-note">${escapeHtml(sourceNote)}</p>
+  `;
+}
+
+let wordRequestId = 0;
+
+async function renderWordResults() {
+  const requestId = ++wordRequestId;
+  const payload = getSelectionPayload();
+  const phrase = payload.text.trim();
+
+  if (!phrase) {
+    resultNodes.words.innerHTML = '<p class="muted">Select a word or phrase to find alternatives.</p>';
+    return;
+  }
+
+  const word = phrase.split(/\s+/)[0].replace(/[^\p{L}\p{N}'-]/gu, '');
+  resultNodes.words.innerHTML = '<p class="muted">Looking up alternatives…</p>';
+
+  try {
+    const { synonyms, antonyms, meansLike } = await fetchWordAlternatives(phrase, word);
+
+    if (requestId !== wordRequestId) {
+      return;
+    }
+
+    resultNodes.words.innerHTML = `
+      <div>
+        <p class="inline-note">Synonyms</p>
+        ${renderTokenList(synonyms, { emptyText: 'No synonyms found.' })}
+      </div>
+      <div>
+        <p class="inline-note">Means like</p>
+        ${renderTokenList(meansLike, { emptyText: 'No “means like” matches found.', soft: true })}
+      </div>
+      <div>
+        <p class="inline-note">Antonyms</p>
+        ${renderTokenList(antonyms, { emptyText: 'No antonyms found.', soft: true })}
+      </div>
+      <p class="inline-note">Only the selected text was sent to Datamuse.</p>
+    `;
+  } catch {
+    if (requestId !== wordRequestId) {
+      return;
+    }
+
+    resultNodes.words.innerHTML = '<p class="muted">Word lookup is unavailable right now. Check your connection and try again.</p>';
+  }
 }
 
 function renderSyllableResults(lines = editor.getLines()) {
@@ -933,6 +1088,18 @@ function renderStatusPanel(lines = editor.getLines()) {
   statusNodes.structureSummary.textContent = analysis.structureSummary;
   statusNodes.structureDetail.innerHTML = renderMetricList(analysis.structureItems, {
     emptyText: 'Line count, stanza breaks, and shape cues live here.',
+  });
+  statusNodes.sectionsSummary.textContent = analysis.sectionsSummary;
+  statusNodes.sectionsDetail.innerHTML = renderMetricList(analysis.sections, {
+    emptyText: 'Per-section line and syllable counts will appear here.',
+  });
+  statusNodes.schemeSummary.textContent = analysis.schemeSummary;
+  statusNodes.schemeDetail.innerHTML = renderMetricList(analysis.schemes, {
+    emptyText: 'Per-stanza rhyme schemes like AABB or ABAB will appear here.',
+  });
+  statusNodes.soundSummary.textContent = analysis.soundSummary;
+  statusNodes.soundDetail.innerHTML = renderMetricList(analysis.soundLines, {
+    emptyText: 'Line-by-line alliteration, assonance, and internal rhymes will appear here.',
   });
 }
 
@@ -1377,6 +1544,13 @@ saveDraftButton.addEventListener('click', () => {
   saveDraftAsText();
 });
 
+for (const button of document.querySelectorAll('[data-export]')) {
+  button.addEventListener('click', () => {
+    document.querySelector('#export-menu')?.removeAttribute('open');
+    exportDraft(button.dataset.export);
+  });
+}
+
 loadDraftButton.addEventListener('click', () => {
   openDraftFilePicker();
 });
@@ -1414,7 +1588,14 @@ for (const button of document.querySelectorAll('[data-run-tool]')) {
     if (tool === 'rhyme') {
       setExpandedToolGroup('sound');
       setActiveToolCard('rhyme');
-      renderRhymeResults();
+      await renderRhymeResults();
+      return;
+    }
+
+    if (tool === 'words') {
+      setExpandedToolGroup('remix');
+      setActiveToolCard('words');
+      await renderWordResults();
       return;
     }
 

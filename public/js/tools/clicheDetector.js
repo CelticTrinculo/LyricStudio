@@ -65,7 +65,7 @@ function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-export function detectCliches(text = '') {
+function detectCliches(text = '') {
   const lowerText = text.toLowerCase();
 
   return CLICHES.flatMap((entry) => {

@@ -14,11 +14,21 @@ function getTargetWord(text) {
   return extractWords(text).at(-1) || '';
 }
 
+export function getEndRhymeKey(text = '') {
+  const word = getTargetWord(text);
+
+  if (!word) {
+    return { word: '', key: '' };
+  }
+
+  return { word, key: getRhymeKey(word) };
+}
+
 function getVowelGroups(word) {
   return normalizeWord(word).match(/[aeiouy]+/g) || [];
 }
 
-function getRhymeKey(word) {
+export function getRhymeKey(word) {
   const normalized = normalizeWord(word);
 
   if (!normalized) {
@@ -35,7 +45,7 @@ function getRhymeKey(word) {
   return normalized.slice(lastMatch.index);
 }
 
-function sharedSuffixLength(left, right) {
+export function sharedSuffixLength(left, right) {
   let length = 0;
 
   while (

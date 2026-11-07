@@ -11,7 +11,3 @@ export function requestContext(req, _res, next) {
     next();
   });
 }
-
-export function getRequestContext() {
-  return als.getStore() || {};
-}

@@ -22,12 +22,6 @@ export class ServiceUnavailableError extends AppError {
   }
 }
 
-export class NotFoundError extends AppError {
-  constructor(message = 'Resource not found') {
-    super(message, { code: 'NOT_FOUND', httpStatus: 404 });
-  }
-}
-
 export class ExternalServiceError extends AppError {
   constructor(message = 'External service failed', originalError = null) {
     super(message, { code: 'EXTERNAL_SERVICE_ERROR', httpStatus: 502, isOperational: true });

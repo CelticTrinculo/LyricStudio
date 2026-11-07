@@ -1,4 +1,4 @@
-export const TONE_GUIDANCE = {
+const TONE_GUIDANCE = {
   poetic: 'Lean on luminous imagery and surprising word pairings. Sound should earn its beauty — alive, not ornate.',
   darker: 'Favor shadow, weight, and hard consonants. Edge toward what is unspoken rather than stated outright.',
   simpler: 'Plain words only. One clear thought per line. Remove any ornament that does not carry weight.',
@@ -20,7 +20,7 @@ export const TONE_GUIDANCE = {
 };
 
 // Per-genre conventions applied to every output when genre is set.
-export const GENRE_GUIDANCE = {
+const GENRE_GUIDANCE = {
   pop: {
     label: 'Pop',
     syllables: 'Common songwriting range: 4–8 syllables per line; hook lines often tighten to 3–5. Post-chorus vocable hooks ("oh-oh", "yeah") have been standard since the mid-2010s.',
@@ -405,7 +405,7 @@ export function normalizeRhymePattern(rhymePattern = '', lineCount = 1) {
     : '';
 }
 
-export function buildRhymeConstraint(rhymePattern, lineCount) {
+function buildRhymeConstraint(rhymePattern, lineCount) {
   const example = RHYME_EXAMPLES[rhymePattern]
     ?? `e.g. for ${rhymePattern}: choose end-words where matching letters share a perfect rhyme.`;
 
@@ -417,7 +417,7 @@ export function buildRhymeConstraint(rhymePattern, lineCount) {
   ].join('\n');
 }
 
-export function buildToneConstraint(tone) {
+function buildToneConstraint(tone) {
   const normalizedTone = tone.trim().toLowerCase();
   const guidance = TONE_GUIDANCE[normalizedTone]
     ?? `Apply the '${tone}' quality throughout — in word choice, pacing, and the feeling each line leaves behind.`;
@@ -429,7 +429,7 @@ export function buildToneConstraint(tone) {
   ].join('\n');
 }
 
-export function buildGenreConstraint(genre) {
+function buildGenreConstraint(genre) {
   const entry = GENRE_GUIDANCE[genre.trim().toLowerCase()];
 
   if (!entry) {

@@ -1,5 +1,6 @@
-import { EditorState, StateEffect, StateField } from 'https://esm.sh/@codemirror/state@6.5.2?target=es2022'
+import { EditorState, RangeSetBuilder, StateEffect, StateField } from 'https://esm.sh/@codemirror/state@6.5.2?target=es2022'
 import {
+  Decoration,
   EditorView,
   highlightActiveLine,
   highlightActiveLineGutter,
@@ -16,6 +17,7 @@ import {
   indentWithTab,
 } from 'https://esm.sh/@codemirror/commands@6.8.1?target=es2022&deps=@codemirror/state@6.5.2,@codemirror/view@6.38.6'
 import { countSyllables } from './tools/syllableCounter.js'
+import { isSectionHeaderLine } from './analysis.js'
 
 export const DEFAULT_EDITOR_TEXT = [
   'When the room gets quiet enough,',
@@ -172,6 +174,34 @@ const touchSyllableTooltipField = StateField.define({
   provide: (field) => showTooltip.from(field),
 })
 
+/* ---------- Section header line styling ---------- */
+
+const sectionHeaderLineDecoration = Decoration.line({ class: 'cm-section-header' })
+
+const sectionHeaderField = StateField.define({
+  create() {
+    return Decoration.none
+  },
+  update(decorations, tr) {
+    if (!tr.docChanged) {
+      return decorations
+    }
+
+    const builder = new RangeSetBuilder()
+
+    for (let lineNumber = 1; lineNumber <= tr.state.doc.lines; lineNumber += 1) {
+      const line = tr.state.doc.line(lineNumber)
+
+      if (isSectionHeaderLine(line.text)) {
+        builder.add(line.from, line.from, sectionHeaderLineDecoration)
+      }
+    }
+
+    return builder.finish()
+  },
+  provide: (field) => EditorView.decorations.from(field),
+})
+
 export function createEditor({ container, onChange, onSelectionChange }) {
   container.innerHTML = '<div class="editor-grid"><div class="editor-host"></div></div>'
 
@@ -265,6 +295,7 @@ export function createEditor({ container, onChange, onSelectionChange }) {
           return buildSyllableTooltip(currentView, line.number, { atCursor: true })
         }, { hoverTime: SYLLABLE_HINT_DELAY_MS, hideOnChange: true }),
         touchSyllableTooltipField,
+        sectionHeaderField,
         highlightActiveLine(),
         highlightActiveLineGutter(),
         EditorState.tabSize.of(2),

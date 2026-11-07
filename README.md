@@ -25,10 +25,12 @@ Lyric Studio is a lightweight creative-writing app for poets, lyricists, and son
 - Save draft as `.txt`
 - Load `.txt` drafts back into the editor
 - Copy the full draft to the clipboard
+- **Export menu** — print / PDF lyric sheet (clean black-on-white layout with section headings), ChordPro (`.cho`), and Markdown (`.md`)
 
 ### Creative tools
 
-- **Rhyme finder** with safe external RhymeZone link-outs
+- **Rhyme finder** with perfect and near rhymes from the free [Datamuse](https://www.datamuse.com/api/) API (only the selected word is sent), plus safe RhymeZone link-outs and a built-in fallback list when Datamuse is unavailable
+- **Word Finder** for synonyms, antonyms, and "means like" ideas for a selected word or phrase (Datamuse)
 - **Syllable counter** for line-by-line sound checks
 - **Rewriter** for alternate phrasings and tone changes
 - **Imagery expander** for more vivid lines
@@ -39,8 +41,11 @@ Lyric Studio is a lightweight creative-writing app for poets, lyricists, and son
 ### Analysis tools
 
 - Repetition spotting
+- Sound-device spotting: alliteration, assonance, consonance, and internal rhymes, shown line by line (spelling-based, so treat it as a guide)
 - Cliché detection
 - Cadence and line-shape insights
+- Section labels ([Verse], [Chorus], [Pre-Chorus], [Bridge], [Intro], [Outro]…) with per-section stats
+- Per-stanza rhyme-scheme detection (AABB, ABAB…)
 - Structural cues to help read the draft at a glance
 
 ### AI behaviour
@@ -93,10 +98,13 @@ The project includes `.env.example` with the expected values:
 
 ## Project structure
 
-- `server.js` — Express server and AI API endpoints
+- `src/server.js` — Express server and AI API endpoints
 - `public/index.html` — main app shell
 - `public/styles.css` — app styling and theme system
 - `public/js/` — editor, UI, analysis, and tool logic
+- `public/js/tools/datamuse.js` — browser client for Datamuse rhyme and word lookups
+- `public/js/tools/soundDevices.js` — alliteration, assonance, consonance, and internal-rhyme detection
+- `public/js/tools/exporters.js` — Markdown, ChordPro, and print-sheet export
 
 ## API notes
 

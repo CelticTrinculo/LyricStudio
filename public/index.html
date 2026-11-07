@@ -76,7 +76,7 @@
             aria-expanded="false"
             aria-controls="status-panel"
             aria-label="Toggle analysis panel"
-            title="Analysis — cadence, repetition, structure"
+            title="Analysis — cadence, repetition, sections, rhyme"
           >
             <i class="fa-solid fa-chart-column" aria-hidden="true"></i>
             <span class="activity-button-label">Analysis</span>
@@ -107,6 +107,26 @@
             <div class="editor-actions">
               <button id="font-decrease" type="button" class="ghost-button editor-action-button font-size-button" title="Smaller text" aria-label="Decrease editor text size">A−</button>
               <button id="font-increase" type="button" class="ghost-button editor-action-button font-size-button" title="Larger text" aria-label="Increase editor text size">A+</button>
+              <details id="export-menu" class="export-menu">
+                <summary class="ghost-button editor-action-button">
+                  <i class="fa-solid fa-file-export" aria-hidden="true"></i>
+                  <span>Export</span>
+                </summary>
+                <div class="export-menu-list">
+                  <button type="button" class="ghost-button editor-action-button" data-export="print">
+                    <i class="fa-solid fa-print" aria-hidden="true"></i>
+                    <span>Print / PDF lyric sheet</span>
+                  </button>
+                  <button type="button" class="ghost-button editor-action-button" data-export="chordpro">
+                    <i class="fa-solid fa-guitar" aria-hidden="true"></i>
+                    <span>ChordPro (.cho)</span>
+                  </button>
+                  <button type="button" class="ghost-button editor-action-button" data-export="markdown">
+                    <i class="fa-brands fa-markdown" aria-hidden="true"></i>
+                    <span>Markdown (.md)</span>
+                  </button>
+                </div>
+              </details>
               <button id="save-draft-button" type="button" class="ghost-button editor-action-button">
                 <i class="fa-solid fa-download" aria-hidden="true"></i>
                 <span>Save .txt</span>
@@ -326,7 +346,7 @@
                       <span class="tool-icon" aria-hidden="true"><i class="fa-solid fa-link"></i></span>
                       <div>
                         <h4>Rhyme Finder</h4>
-                        <p>Quick rhyme support for the selected word.</p>
+                        <p>Perfect and near rhymes for the selected word, from Datamuse.</p>
                       </div>
                     </div>
                     <button type="button" class="tool-button" data-run-tool="rhyme">Run</button>
@@ -362,6 +382,20 @@
 
               <div id="tool-group-remix-content" class="tool-group-content">
                 <p class="tool-group-note">Transform a selected phrase — rewrite it, push it into imagery, or spin a fresh metaphor.</p>
+
+                <section class="tool-card" data-tool-card="words">
+                  <div class="tool-card-header">
+                    <div class="tool-card-copy">
+                      <span class="tool-icon" aria-hidden="true"><i class="fa-solid fa-book-open"></i></span>
+                      <div>
+                        <h4>Word Finder</h4>
+                        <p>Synonyms, antonyms, and “means like” ideas for the selected word or phrase.</p>
+                      </div>
+                    </div>
+                    <button type="button" class="tool-button" data-run-tool="words">Run</button>
+                  </div>
+                  <div id="words-results" class="tool-result muted">Select a word or phrase to find alternatives.</div>
+                </section>
 
                 <section class="tool-card" data-tool-card="rewrite">
                   <div class="tool-card-header stacked">
@@ -487,7 +521,7 @@
         <header class="drawer-header">
           <p class="eyebrow">Analysis dock</p>
           <h2 class="drawer-title">Read the shape of the draft</h2>
-          <p class="drawer-note">Quiet checks for cadence, repetition, and structure — visible when needed, silent when not.</p>
+          <p class="drawer-note">Quiet checks for cadence, repetition, sections, and rhyme — visible when needed, silent when not.</p>
         </header>
         <div class="drawer-body">
           <section class="status-card">
@@ -503,9 +537,27 @@
           </section>
 
           <section class="status-card">
+            <h3 class="status-card-title">Sound devices</h3>
+            <p id="sound-summary" class="status-summary muted">Alliteration, assonance, and internal rhymes will appear here.</p>
+            <div id="sound-detail" class="status-detail"></div>
+          </section>
+
+          <section class="status-card">
             <h3 class="status-card-title">Structure</h3>
             <p id="structure-summary" class="status-summary muted">Line count, stanza breaks, and shape cues live here.</p>
             <div id="structure-detail" class="status-detail"></div>
+          </section>
+
+          <section class="status-card">
+            <h3 class="status-card-title">Sections</h3>
+            <p id="sections-summary" class="status-summary muted">Add section labels on their own lines — [Verse], [Chorus], [Pre-Chorus], [Bridge], [Intro], [Outro], and more — to read the draft by part.</p>
+            <div id="sections-detail" class="status-detail"></div>
+          </section>
+
+          <section class="status-card">
+            <h3 class="status-card-title">Rhyme scheme</h3>
+            <p id="scheme-summary" class="status-summary muted">End-rhyme patterns will appear here once a stanza takes shape.</p>
+            <div id="scheme-detail" class="status-detail"></div>
           </section>
         </div>
       </aside>
@@ -543,6 +595,10 @@
               <details class="faq-item">
                 <summary>What does the genre picker do?</summary>
                 <p>It shapes every AI suggestion — vocabulary, conventions, and structure shift to match the genre you choose. Set it in the Tools panel before running a tool.</p>
+              </details>
+              <details class="faq-item">
+                <summary>How do sections and rhyme schemes work?</summary>
+                <p>Add section labels on their own lines — <code>[Verse]</code>, <code>[Chorus]</code>, <code>[Pre-Chorus]</code>, <code>[Bridge]</code>, <code>[Intro]</code>, <code>[Outro]</code>, <code>[Hook]</code>, <code>[Interlude]</code>, <code>[Solo]</code>, and many more. Any capitalization works, numbers and letters work (<code>[Verse 2]</code>, <code>[Verse II]</code>, <code>[Verse A]</code>), shorthands work (<code>[V2]</code>, <code>[PC]</code>, <code>[M8]</code>), and repeat markers work (<code>[Chorus ×2]</code>). The Analysis dock then reads the draft by part: per-section line and syllable counts, the song&rsquo;s flow, and per-stanza rhyme schemes like AABB.</p>
               </details>
               <details class="faq-item">
                 <summary>Can the AI write the whole thing for me?</summary>

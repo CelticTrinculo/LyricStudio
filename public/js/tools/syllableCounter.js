@@ -22,7 +22,7 @@ function normalizeWord(word = '') {
     .replace(/^'+|'+$/g, '');
 }
 
-export function countWordSyllables(word) {
+function countWordSyllables(word) {
   const normalized = normalizeWord(word);
 
   if (!normalized) {

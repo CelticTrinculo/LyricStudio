@@ -12,7 +12,3 @@ const SKILLS = { rewrite, imagery, ideas, metaphor, titles, polish, rhyme, parod
 export function getSkill(name) {
   return SKILLS[name] ?? null;
 }
-
-export function listSkills() {
-  return Object.values(SKILLS).map((s) => s.definition);
-}
