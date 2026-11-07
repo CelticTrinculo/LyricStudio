@@ -1577,6 +1577,19 @@ for (const group of toolGroups) {
   });
 }
 
+// Analysis cards — collapsible detail rows.
+for (const toggle of document.querySelectorAll('.status-toggle')) {
+  toggle.addEventListener('click', () => {
+    const card = toggle.closest('.status-card');
+    if (!card) {
+      return;
+    }
+
+    const collapsed = card.classList.toggle('is-collapsed');
+    toggle.setAttribute('aria-expanded', String(!collapsed));
+  });
+}
+
 applyShortcutHints();
 restoreLocalDraftBackup();
 updateAutosaveIndicator();

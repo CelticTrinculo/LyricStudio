@@ -160,6 +160,11 @@ export function setupChrome({
       toggle.classList.toggle('is-active', isOpen);
       toggle.setAttribute('aria-pressed', String(isOpen));
       toggle.setAttribute('aria-expanded', String(isOpen));
+
+      // Every drawer opens at the top so its section nav is immediately visible.
+      if (isOpen) {
+        panel.querySelector('.drawer-body')?.scrollTo({ top: 0 });
+      }
     });
 
     if (scrim) {

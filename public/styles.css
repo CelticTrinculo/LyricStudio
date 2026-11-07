@@ -1450,6 +1450,41 @@ input::placeholder {
   letter-spacing: -0.01em;
 }
 
+.status-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.15rem 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.status-toggle:hover span {
+  color: var(--accent);
+}
+
+.status-chevron {
+  flex-shrink: 0;
+  color: var(--muted-soft);
+  font-size: 0.7rem;
+  transition: transform 180ms ease, color 180ms ease;
+}
+
+.status-card.is-collapsed .status-detail {
+  display: none;
+}
+
+.status-card:not(.is-collapsed) .status-chevron {
+  transform: rotate(180deg);
+  color: var(--accent);
+}
+
 .status-summary {
   font-size: 0.85rem;
   line-height: 1.5;
@@ -2073,7 +2108,7 @@ input::placeholder {
   }
 
   .tool-group-content {
-    padding-left: 2.7rem;
+    padding-left: 0.5rem;
   }
 
   .tool-card {

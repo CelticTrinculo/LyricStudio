@@ -157,7 +157,7 @@
           <h2 class="drawer-title">What's in focus</h2>
         </header>
         <div class="drawer-body">
-          <section class="drawer-section">
+          <section class="drawer-section" id="ctx-source">
             <h3 class="drawer-section-title">The source</h3>
             <div class="context-stack">
               <div class="context-chip">
@@ -172,13 +172,13 @@
             <p class="rail-note">Select a phrase to send it into any tool. If nothing is selected, the active line becomes the source.</p>
           </section>
 
-          <section class="drawer-section">
+          <section class="drawer-section" id="ctx-history">
             <h3 class="drawer-section-title">Draft history</h3>
             <div id="draft-history" class="history-list" aria-live="polite"></div>
             <p class="rail-note">Versions collect automatically as you write. Click one to bring it back — your current text is saved first, so nothing is lost.</p>
           </section>
 
-          <section class="drawer-section">
+          <section class="drawer-section" id="ctx-workflow">
             <h3 class="drawer-section-title">A way through</h3>
             <ol class="workflow-list">
               <li>Draft your lines on the page.</li>
@@ -188,7 +188,7 @@
             </ol>
           </section>
 
-          <section class="drawer-section">
+          <section class="drawer-section" id="ctx-tools">
             <h3 class="drawer-section-title">Choosing a tool</h3>
             <div class="cue-list">
               <article class="cue-item">
@@ -231,7 +231,7 @@
           <p class="drawer-note">Selection first, active line second.</p>
         </header>
         <div class="drawer-body">
-          <label class="genre-field" for="global-genre">
+          <label class="genre-field" id="tools-genre" for="global-genre">
             <span class="genre-label">Genre</span>
             <select id="global-genre">
               <option value="">No genre preference</option>
@@ -271,7 +271,7 @@
           </label>
 
           <div class="tool-groups">
-            <section class="tool-group" data-tool-group="sparks" aria-labelledby="tool-group-sparks">
+            <section class="tool-group" id="group-sparks" data-tool-group="sparks" aria-labelledby="tool-group-sparks">
               <button type="button" class="tool-group-toggle" aria-expanded="false" aria-controls="tool-group-sparks-content">
                 <span class="tool-group-icon" aria-hidden="true"><i class="fa-solid fa-lightbulb"></i></span>
                 <span class="tool-group-toggle-copy">
@@ -327,8 +327,8 @@
               </div>
             </section>
 
-            <section class="tool-group is-expanded" data-tool-group="sound" aria-labelledby="tool-group-sound">
-              <button type="button" class="tool-group-toggle" aria-expanded="true" aria-controls="tool-group-sound-content">
+            <section class="tool-group" id="group-sound" data-tool-group="sound" aria-labelledby="tool-group-sound">
+              <button type="button" class="tool-group-toggle" aria-expanded="false" aria-controls="tool-group-sound-content">
                 <span class="tool-group-icon" aria-hidden="true"><i class="fa-solid fa-music"></i></span>
                 <span class="tool-group-toggle-copy">
                   <span class="eyebrow">Sound</span>
@@ -370,7 +370,7 @@
               </div>
             </section>
 
-            <section class="tool-group" data-tool-group="remix" aria-labelledby="tool-group-remix">
+            <section class="tool-group" id="group-remix" data-tool-group="remix" aria-labelledby="tool-group-remix">
               <button type="button" class="tool-group-toggle" aria-expanded="false" aria-controls="tool-group-remix-content">
                 <span class="tool-group-icon" aria-hidden="true"><i class="fa-solid fa-arrows-rotate"></i></span>
                 <span class="tool-group-toggle-copy">
@@ -471,7 +471,7 @@
               </div>
             </section>
 
-            <section class="tool-group" data-tool-group="review" aria-labelledby="tool-group-review">
+            <section class="tool-group" id="group-review" data-tool-group="review" aria-labelledby="tool-group-review">
               <button type="button" class="tool-group-toggle" aria-expanded="false" aria-controls="tool-group-review-content">
                 <span class="tool-group-icon" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
                 <span class="tool-group-toggle-copy">
@@ -524,38 +524,68 @@
           <p class="drawer-note">Quiet checks for cadence, repetition, sections, and rhyme — visible when needed, silent when not.</p>
         </header>
         <div class="drawer-body">
-          <section class="status-card">
-            <h3 class="status-card-title">Cadence</h3>
+          <section class="status-card is-collapsed" id="analysis-cadence">
+            <h3 class="status-card-title">
+              <button type="button" class="status-toggle" aria-expanded="false" aria-controls="rhythm-lines">
+                <span>Cadence</span>
+                <i class="fa-solid fa-chevron-down status-chevron" aria-hidden="true"></i>
+              </button>
+            </h3>
             <p id="rhythm-summary" class="status-summary muted">Add a few lines to see rhythmic balance.</p>
             <div id="rhythm-lines" class="status-detail"></div>
           </section>
 
-          <section class="status-card">
-            <h3 class="status-card-title">Repetition</h3>
+          <section class="status-card is-collapsed" id="analysis-repetition">
+            <h3 class="status-card-title">
+              <button type="button" class="status-toggle" aria-expanded="false" aria-controls="repetition-detail">
+                <span>Repetition</span>
+                <i class="fa-solid fa-chevron-down status-chevron" aria-hidden="true"></i>
+              </button>
+            </h3>
             <p id="repetition-summary" class="status-summary muted">Repeated words and line endings will appear here.</p>
             <div id="repetition-detail" class="status-detail"></div>
           </section>
 
-          <section class="status-card">
-            <h3 class="status-card-title">Sound devices</h3>
+          <section class="status-card is-collapsed" id="analysis-sound">
+            <h3 class="status-card-title">
+              <button type="button" class="status-toggle" aria-expanded="false" aria-controls="sound-detail">
+                <span>Sound devices</span>
+                <i class="fa-solid fa-chevron-down status-chevron" aria-hidden="true"></i>
+              </button>
+            </h3>
             <p id="sound-summary" class="status-summary muted">Alliteration, assonance, and internal rhymes will appear here.</p>
             <div id="sound-detail" class="status-detail"></div>
           </section>
 
-          <section class="status-card">
-            <h3 class="status-card-title">Structure</h3>
+          <section class="status-card is-collapsed" id="analysis-structure">
+            <h3 class="status-card-title">
+              <button type="button" class="status-toggle" aria-expanded="false" aria-controls="structure-detail">
+                <span>Structure</span>
+                <i class="fa-solid fa-chevron-down status-chevron" aria-hidden="true"></i>
+              </button>
+            </h3>
             <p id="structure-summary" class="status-summary muted">Line count, stanza breaks, and shape cues live here.</p>
             <div id="structure-detail" class="status-detail"></div>
           </section>
 
-          <section class="status-card">
-            <h3 class="status-card-title">Sections</h3>
+          <section class="status-card is-collapsed" id="analysis-sections">
+            <h3 class="status-card-title">
+              <button type="button" class="status-toggle" aria-expanded="false" aria-controls="sections-detail">
+                <span>Sections</span>
+                <i class="fa-solid fa-chevron-down status-chevron" aria-hidden="true"></i>
+              </button>
+            </h3>
             <p id="sections-summary" class="status-summary muted">Add section labels on their own lines — [Verse], [Chorus], [Pre-Chorus], [Bridge], [Intro], [Outro], and more — to read the draft by part.</p>
             <div id="sections-detail" class="status-detail"></div>
           </section>
 
-          <section class="status-card">
-            <h3 class="status-card-title">Rhyme scheme</h3>
+          <section class="status-card is-collapsed" id="analysis-scheme">
+            <h3 class="status-card-title">
+              <button type="button" class="status-toggle" aria-expanded="false" aria-controls="scheme-detail">
+                <span>Rhyme scheme</span>
+                <i class="fa-solid fa-chevron-down status-chevron" aria-hidden="true"></i>
+              </button>
+            </h3>
             <p id="scheme-summary" class="status-summary muted">End-rhyme patterns will appear here once a stanza takes shape.</p>
             <div id="scheme-detail" class="status-detail"></div>
           </section>
@@ -568,7 +598,7 @@
           <h2 class="drawer-title">What this is, how it works</h2>
         </header>
         <div class="drawer-body">
-          <section class="drawer-section">
+          <section class="drawer-section" id="help-about">
             <h3 class="drawer-section-title">About Lyric Studio</h3>
             <p class="help-copy">
               Lyric Studio is a quiet, focused workspace for song lyrics and poetry. The editor is the whole room —
@@ -585,7 +615,7 @@
             </p>
           </section>
 
-          <section class="drawer-section">
+          <section class="drawer-section" id="help-faq">
             <h3 class="drawer-section-title">Frequently asked questions</h3>
             <div class="faq-list">
               <details class="faq-item" open>
