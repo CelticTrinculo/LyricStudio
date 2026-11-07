@@ -206,11 +206,15 @@ export function setupChrome({
 
   return {
     setAiStatus({ aiAvailable, model }) {
-      aiStatus.classList.toggle('is-ready', aiAvailable);
-      aiStatus.classList.toggle('is-unavailable', !aiAvailable);
-      aiStatus.textContent = aiAvailable
+      const label = aiAvailable
         ? `AI tools ready · ${model}`
         : 'AI tools unavailable · add OPENAI_API_KEY';
+
+      for (const badge of document.querySelectorAll('.status-badge')) {
+        badge.classList.toggle('is-ready', aiAvailable);
+        badge.classList.toggle('is-unavailable', !aiAvailable);
+        badge.textContent = label;
+      }
     },
     setSelectionChip(label) {
       selectionChip.textContent = label;

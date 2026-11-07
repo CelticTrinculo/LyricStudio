@@ -1584,6 +1584,45 @@ input::placeholder {
   border-bottom-color: var(--accent);
 }
 
+.about-status-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+.about-status-links .status-badge {
+  white-space: normal;
+}
+
+.about-link-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.1rem;
+  padding: 0.3rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
+}
+
+.about-link-button:hover,
+.about-link-button:focus-visible {
+  border-color: var(--accent-soft-strong);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.about-link-button i {
+  font-size: 0.95rem;
+}
+
 /* ---------- Status bar ---------- */
 
 .statusbar {
@@ -2009,20 +2048,8 @@ input::placeholder {
     display: none;
   }
 
-  .status-badge {
-    width: 2.1rem;
-    min-width: 2.1rem;
-    min-height: 2.1rem;
-    padding: 0.3rem;
-    font-size: 0;
-    justify-content: center;
-    max-width: none;
-    overflow: visible;
-  }
-
-  .status-badge::before {
-    width: 0.6rem;
-    height: 0.6rem;
+  .topbar-controls .status-badge {
+    display: none;
   }
 
   .theme-icon-button {
@@ -2048,6 +2075,7 @@ input::placeholder {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
+    justify-content: flex-start;
     gap: 0.4rem;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
